@@ -37,6 +37,7 @@ public class Reflector {
 
     /**
      * 反射器构造方法
+     *
      * @param clazz
      */
     public Reflector(Class<?> clazz) {
@@ -66,6 +67,7 @@ public class Reflector {
 
     /**
      * 获取类对象的默认无参构造方法赋值给defaultConstructor.
+     *
      * @param clazz
      */
     private void addDefaultConstructor(Class<?> clazz) {
@@ -95,39 +97,61 @@ public class Reflector {
 
     /**
      * 获取和赋值 get方法 字段和调用器之间的映射关系
+     *
      * @param cls
      */
     private void addGetMethods(Class<?> cls) {
         //冲突的方法列表
         Map<String, List<Method>> conflictingGetters = new HashMap<String, List<Method>>();
 
+        //获取cls中所有的方法, 包含其父类中的私有非私有方法.
         Method[] methods = getClassMethods(cls);
         for (Method method : methods) {
+            //如果参数大于0 说明不可能是get方法,跳出循环.
             if (method.getParameterTypes().length > 0) {
                 continue;
             }
+            //获取方法名
             String name = method.getName();
+            //判断 是 get前缀还是 is前缀
             if ((name.startsWith("get") && name.length() > 3)
                     || (name.startsWith("is") && name.length() > 2)) {
+                //将方法名处理为字段名
                 name = PropertyNamer.methodToProperty(name);
+                //处理冲突方法,?什么样方法算是冲突方法.
                 addMethodConflict(conflictingGetters, name, method);
             }
         }
         resolveGetterConflicts(conflictingGetters);
     }
 
+    /**
+     * 解决get冲突方法
+     *
+     * @param conflictingGetters
+     */
     private void resolveGetterConflicts(Map<String, List<Method>> conflictingGetters) {
         for (Entry<String, List<Method>> entry : conflictingGetters.entrySet()) {
+            //优先方法
             Method winner = null;
+            //属性名称
             String propName = entry.getKey();
+            //候选者candidate
             for (Method candidate : entry.getValue()) {
+                //第一次进入当选者为null
                 if (winner == null) {
+                    //将第一个候选者赋值给当选者引用
                     winner = candidate;
+                    //跳出循环
                     continue;
                 }
+                //获取当选者 返回值类型
                 Class<?> winnerType = winner.getReturnType();
+                //获取候选者 返回值类型
                 Class<?> candidateType = candidate.getReturnType();
+                //判断 当选者 和候选者 返回类型是否相同
                 if (candidateType.equals(winnerType)) {
+                    //如果相同
                     if (!boolean.class.equals(candidateType)) {
                         throw new ReflectionException(
                                 "Illegal overloaded getter method with ambiguous type for property "
@@ -137,36 +161,56 @@ public class Reflector {
                         winner = candidate;
                     }
                 } else if (candidateType.isAssignableFrom(winnerType)) {
-                    // OK getter type is descendant
+                    // 保留当前 当选者方法, winnerType 是 candidateType的父类
                 } else if (winnerType.isAssignableFrom(candidateType)) {
+                    // 替换当选者方法, candidateType 是 winnerType 的父类
                     winner = candidate;
                 } else {
+                    //否则抛出异常
                     throw new ReflectionException(
                             "Illegal overloaded getter method with ambiguous type for property "
                                     + propName + " in class " + winner.getDeclaringClass()
                                     + ". This breaks the JavaBeans specification and can cause unpredictable results.");
                 }
             }
+            //将传入的方法 放到 getMethods 和 getTypes中.
             addGetMethod(propName, winner);
         }
     }
 
+    /**
+     * 将传入的方法 放到 getMethods 和 getTypes中.
+     *
+     * @param name
+     * @param method
+     */
     private void addGetMethod(String name, Method method) {
+        //排除一些非 属性字段
         if (isValidPropertyName(name)) {
             getMethods.put(name, new MethodInvoker(method));
+            //解析出返回值类型
             Type returnType = TypeParameterResolver.resolveReturnType(method, type);
+            //将返回值类型转换成 class 放入getTypes数组中
             getTypes.put(name, typeToClass(returnType));
         }
     }
 
+    /**
+     * 添加set方法 属性名和方法的映射
+     * @param cls
+     */
     private void addSetMethods(Class<?> cls) {
         Map<String, List<Method>> conflictingSetters = new HashMap<String, List<Method>>();
         Method[] methods = getClassMethods(cls);
         for (Method method : methods) {
             String name = method.getName();
+            //开头必须是set
             if (name.startsWith("set") && name.length() > 3) {
+                //必须是只有一个参数
                 if (method.getParameterTypes().length == 1) {
+                    //方法名转属性名
                     name = PropertyNamer.methodToProperty(name);
+                    //
                     addMethodConflict(conflictingSetters, name, method);
                 }
             }
@@ -183,16 +227,23 @@ public class Reflector {
         list.add(method);
     }
 
+    /**
+     * 解决set方法冲突
+     * @param conflictingSetters
+     */
     private void resolveSetterConflicts(Map<String, List<Method>> conflictingSetters) {
         for (String propName : conflictingSetters.keySet()) {
             List<Method> setters = conflictingSetters.get(propName);
+
             Class<?> getterType = getTypes.get(propName);
             Method match = null;
             ReflectionException exception = null;
             for (Method setter : setters) {
+                //获取set方法第一个参数
                 Class<?> paramType = setter.getParameterTypes()[0];
                 if (paramType.equals(getterType)) {
-                    // should be the best match
+                    //如果 set方法 和 get方法的参数类型相同
+                    //找到匹配的setter方法
                     match = setter;
                     break;
                 }
@@ -238,6 +289,11 @@ public class Reflector {
         }
     }
 
+    /**
+     * 将 type 转换成 Class 返回
+     * @param src
+     * @return
+     */
     private Class<?> typeToClass(Type src) {
         Class<?> result = null;
         if (src instanceof Class) {
@@ -305,60 +361,74 @@ public class Reflector {
         }
     }
 
+    /**
+     * 判断是否是合法,排除一些特殊的方法
+     *
+     * @param name
+     * @return
+     */
     private boolean isValidPropertyName(String name) {
         return !(name.startsWith("$") || "serialVersionUID".equals(name) || "class".equals(name));
     }
 
     /*
-     * This method returns an array containing all methods
-     * declared in this class and any superclass.
-     * We use this method, instead of the simpler Class.getMethods(),
-     * because we want to look for private methods as well.
-     *
+     * 此方法返回包含所有方法的数组,从class中以及其父类中.
+     * 不适用 Class.getMethods()的原因是想获取私有方法.
      * @param cls The class
-     * @return An array containing all methods in this class
+     * @return 包含所有方法的数组
      */
     private Method[] getClassMethods(Class<?> cls) {
+        //key为方法签名
         Map<String, Method> uniqueMethods = new HashMap<String, Method>();
+        //循环中当前class
         Class<?> currentClass = cls;
         while (currentClass != null) {
+            //获取当前类所有的方法,添加到  uniqueMethods 中去.
             addUniqueMethods(uniqueMethods, currentClass.getDeclaredMethods());
-            // we also need to look for interface methods -
-            // because the class may be abstract
+            //如果是抽象类的话需要查看其接口
             Class<?>[] interfaces = currentClass.getInterfaces();
             for (Class<?> anInterface : interfaces) {
                 addUniqueMethods(uniqueMethods, anInterface.getMethods());
             }
+            //将当前类 指向次循环中 currentClass的父类,实现类似递归的作用
             currentClass = currentClass.getSuperclass();
         }
-
+        //从map中取到所有方法集合
         Collection<Method> methods = uniqueMethods.values();
-
+        //转换成数组返回
         return methods.toArray(new Method[methods.size()]);
     }
 
     private void addUniqueMethods(Map<String, Method> uniqueMethods, Method[] methods) {
         for (Method currentMethod : methods) {
+            //判断是否是桥接方法,如果不是桥接方法进入
             if (!currentMethod.isBridge()) {
+                //获取方法唯一签名
                 String signature = getSignature(currentMethod);
-                // check to see if the method is already known
-                // if it is known, then an extended class must have
-                // overridden a method
+                //检查这个方法是否已经存在.
+                //如果已经存在,覆盖此方法.
                 if (!uniqueMethods.containsKey(signature)) {
                     if (canAccessPrivateMethods()) {
                         try {
+                            //设置此方法为可访问
                             currentMethod.setAccessible(true);
                         } catch (Exception e) {
                             // Ignored. This is only a final precaution, nothing we can do.
                         }
                     }
-
+                    //key为方法签名
                     uniqueMethods.put(signature, currentMethod);
                 }
             }
         }
     }
 
+    /**
+     * 获取方法签名
+     *
+     * @param method
+     * @return
+     */
     private String getSignature(Method method) {
         StringBuilder sb = new StringBuilder();
         Class<?> returnType = method.getReturnType();
@@ -378,6 +448,11 @@ public class Reflector {
         return sb.toString();
     }
 
+    /**
+     * 检查操作系统是否允许访问私有方法
+     *
+     * @return
+     */
     private static boolean canAccessPrivateMethods() {
         try {
             SecurityManager securityManager = System.getSecurityManager();

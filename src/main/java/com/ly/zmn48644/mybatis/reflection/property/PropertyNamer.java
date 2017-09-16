@@ -8,9 +8,14 @@ import java.util.Locale;
 public final class PropertyNamer {
 
     private PropertyNamer() {
-        // Prevent Instantiation of Static Class
     }
 
+    /**
+     * 将get或者is方法名前缀去掉
+     *
+     * @param name
+     * @return
+     */
     public static String methodToProperty(String name) {
         if (name.startsWith("is")) {
             name = name.substring(2);

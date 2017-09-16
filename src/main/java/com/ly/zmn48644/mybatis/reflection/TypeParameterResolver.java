@@ -3,6 +3,9 @@ package com.ly.zmn48644.mybatis.reflection;
 import java.lang.reflect.*;
 import java.util.Arrays;
 
+/**
+ * 参数类型解析器
+ */
 public class TypeParameterResolver {
 
   /**
