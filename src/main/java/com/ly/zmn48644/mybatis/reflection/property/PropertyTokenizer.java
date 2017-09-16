@@ -2,6 +2,10 @@ package com.ly.zmn48644.mybatis.reflection.property;
 
 import java.util.Iterator;
 
+/**
+ * 属性表达式处理类,实现迭代器接口处理,多级的属性表达式.
+ * 比如 orders[0].items[0].name
+ */
 public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
   private String name;
   private final String indexedName;

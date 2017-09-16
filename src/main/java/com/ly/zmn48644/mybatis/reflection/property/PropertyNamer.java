@@ -7,10 +7,19 @@ import java.util.Locale;
 
 public final class PropertyNamer {
 
+    /**
+     * 构造方法私有,不允许创建对象
+     */
     private PropertyNamer() {
-        // Prevent Instantiation of Static Class
+
     }
 
+    /**
+     * 去掉 get/set/is 前缀的方法名,返回属性名
+     *
+     * @param name
+     * @return
+     */
     public static String methodToProperty(String name) {
         if (name.startsWith("is")) {
             name = name.substring(2);
@@ -27,14 +36,32 @@ public final class PropertyNamer {
         return name;
     }
 
+    /**
+     * 判断是否是属性方法
+     *
+     * @param name
+     * @return
+     */
     public static boolean isProperty(String name) {
         return name.startsWith("get") || name.startsWith("set") || name.startsWith("is");
     }
 
+    /**
+     * 是否是 get 方法
+     *
+     * @param name
+     * @return
+     */
     public static boolean isGetter(String name) {
         return name.startsWith("get") || name.startsWith("is");
     }
 
+    /**
+     * 是否是 set方法
+     *
+     * @param name
+     * @return
+     */
     public static boolean isSetter(String name) {
         return name.startsWith("set");
     }

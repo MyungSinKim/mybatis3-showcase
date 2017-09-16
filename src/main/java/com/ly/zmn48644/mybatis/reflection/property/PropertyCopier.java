@@ -2,6 +2,10 @@ package com.ly.zmn48644.mybatis.reflection.property;
 
 import java.lang.reflect.Field;
 
+/**
+ * 对象之间的拷贝
+ * 类似 beanutis.copy
+ */
 public final class PropertyCopier {
 
     private PropertyCopier() {
@@ -10,6 +14,7 @@ public final class PropertyCopier {
 
     public static void copyBeanProperties(Class<?> type, Object sourceBean, Object destinationBean) {
         Class<?> parent = type;
+        //从子类向父类迭代拷贝,这种模式重复出现多次.很重要.
         while (parent != null) {
             final Field[] fields = parent.getDeclaredFields();
             for (Field field : fields) {
