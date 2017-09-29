@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentMap;
 public class DefaultReflectorFactory implements ReflectorFactory {
     //是否启用缓存判断字段
     private boolean classCacheEnabled = true;
-    //用于存放缓存反射器的map
+    //用于存放缓存反射器的map,这里注意使用的是线程安全的map
     private final ConcurrentMap<Class<?>, Reflector> reflectorMap = new ConcurrentHashMap<Class<?>, Reflector>();
 
     public DefaultReflectorFactory() {
