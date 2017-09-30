@@ -13,6 +13,7 @@ public class XPathParserTest {
     String resource = "nodelet_test.xml";
     XPathParser parser;
     InputStream inputStream;
+
     @Before
     public void setup() throws IOException {
         inputStream = Resources.getResourceAsStream(resource);

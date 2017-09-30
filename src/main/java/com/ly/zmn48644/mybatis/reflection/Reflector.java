@@ -80,7 +80,7 @@ public class Reflector {
                 //判断系统权限判断是否能够访问私有方法
                 if (canAccessPrivateMethods()) {
                     try {
-                        //设置为可访问
+                        //设置不进行访问检查,调用效率.
                         constructor.setAccessible(true);
                     } catch (Exception e) {
                         // Ignored. This is only a final precaution, nothing we can do.
@@ -197,6 +197,7 @@ public class Reflector {
 
     /**
      * 添加set方法 属性名和方法的映射
+     *
      * @param cls
      */
     private void addSetMethods(Class<?> cls) {
@@ -229,6 +230,7 @@ public class Reflector {
 
     /**
      * 解决set方法冲突
+     *
      * @param conflictingSetters
      */
     private void resolveSetterConflicts(Map<String, List<Method>> conflictingSetters) {
@@ -291,6 +293,7 @@ public class Reflector {
 
     /**
      * 将 type 转换成 Class 返回
+     *
      * @param src
      * @return
      */
@@ -318,10 +321,13 @@ public class Reflector {
     private void addFields(Class<?> clazz) {
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
+            //首先要判断系统的检查权限.
             if (canAccessPrivateMethods()) {
                 try {
+                    //设置访问安全检查,可以提高反射调用的性能.
                     field.setAccessible(true);
                 } catch (Exception e) {
+                    //忽略此处的异常处理, 这是最后的防御,我无能为力.
                     // Ignored. This is only a final precaution, nothing we can do.
                 }
             }

@@ -19,7 +19,8 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * mybatis 中的封装xpath处理的类
+ * mybatis 中的封装xpath处理的类,给定路径,获取某种类型比如字符串,整型等数据.
+ * 用于配置解析,SQL解析.
  */
 public class XPathParser {
 

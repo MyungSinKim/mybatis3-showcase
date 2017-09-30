@@ -5,7 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * @author Clinton Begin
+ * 属性调用器
  */
 public class GetFieldInvoker implements Invoker {
   private final Field field;
