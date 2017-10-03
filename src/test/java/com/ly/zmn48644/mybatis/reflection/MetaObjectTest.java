@@ -1,14 +1,11 @@
 
-package com.ly.zmn48644.mybatis;
+package com.ly.zmn48644.mybatis.reflection;
 
 import com.ly.zmn48644.mybatis.domain.CustomBeanWrapper;
 import com.ly.zmn48644.mybatis.domain.CustomBeanWrapperFactory;
 import com.ly.zmn48644.mybatis.domain.RichType;
 import com.ly.zmn48644.mybatis.domain.blog.Author;
 import com.ly.zmn48644.mybatis.domain.blog.Section;
-import com.ly.zmn48644.mybatis.reflection.DefaultReflectorFactory;
-import com.ly.zmn48644.mybatis.reflection.MetaObject;
-import com.ly.zmn48644.mybatis.reflection.SystemMetaObject;
 import org.junit.Test;
 
 import java.util.*;
@@ -20,7 +17,10 @@ public class MetaObjectTest {
     @Test
     public void shouldGetAndSetField() {
         RichType rich = new RichType();
+
         MetaObject meta = SystemMetaObject.forObject(rich);
+        //通过 MetaObject 对象操作 设置/获取 属性值
+        //注意这里使用的是 Field  也就是 richField 没有 set/get 方法
         meta.setValue("richField", "foo");
         assertEquals("foo", meta.getValue("richField"));
     }
@@ -29,6 +29,7 @@ public class MetaObjectTest {
     public void shouldGetAndSetNestedField() {
         RichType rich = new RichType();
         MetaObject meta = SystemMetaObject.forObject(rich);
+        //通过 MetaObject 对象操作 设置/获取 属性值 , 这里使用了复杂的属性嵌套.
         meta.setValue("richType.richField", "foo");
         assertEquals("foo", meta.getValue("richType.richField"));
     }
@@ -37,6 +38,8 @@ public class MetaObjectTest {
     public void shouldGetAndSetProperty() {
         RichType rich = new RichType();
         MetaObject meta = SystemMetaObject.forObject(rich);
+        //通过 MetaObject 对象操作 设置/获取 属性值.
+        //Property 也就是 有 set/get 方法.
         meta.setValue("richProperty", "foo");
         assertEquals("foo", meta.getValue("richProperty"));
     }
@@ -45,6 +48,8 @@ public class MetaObjectTest {
     public void shouldGetAndSetNestedProperty() {
         RichType rich = new RichType();
         MetaObject meta = SystemMetaObject.forObject(rich);
+        //通过 MetaObject 对象操作 设置/获取 属性值 , 这里使用了复杂的属性嵌套.
+        ////Property 也就是 有 set/get 方法.
         meta.setValue("richType.richProperty", "foo");
         assertEquals("foo", meta.getValue("richType.richProperty"));
     }
@@ -53,6 +58,7 @@ public class MetaObjectTest {
     public void shouldGetAndSetMapPair() {
         RichType rich = new RichType();
         MetaObject meta = SystemMetaObject.forObject(rich);
+        //通过 MetaObject 操作 属性类型为 map 的 属性, 这里是使用的.语法操作.
         meta.setValue("richMap.key", "foo");
         assertEquals("foo", meta.getValue("richMap.key"));
     }
@@ -61,6 +67,7 @@ public class MetaObjectTest {
     public void shouldGetAndSetMapPairUsingArraySyntax() {
         RichType rich = new RichType();
         MetaObject meta = SystemMetaObject.forObject(rich);
+        //通过 MetaObject 操作 属性类型为 map 的 属性, 这里是使用的 数组语法 操作 map.
         meta.setValue("richMap[key]", "foo");
         assertEquals("foo", meta.getValue("richMap[key]"));
     }
@@ -69,6 +76,7 @@ public class MetaObjectTest {
     public void shouldGetAndSetNestedMapPair() {
         RichType rich = new RichType();
         MetaObject meta = SystemMetaObject.forObject(rich);
+        //通过 MetaObject 操作 嵌套的 map 属性对象, 这里使用的是 .语法
         meta.setValue("richType.richMap.key", "foo");
         assertEquals("foo", meta.getValue("richType.richMap.key"));
     }
@@ -77,6 +85,7 @@ public class MetaObjectTest {
     public void shouldGetAndSetNestedMapPairUsingArraySyntax() {
         RichType rich = new RichType();
         MetaObject meta = SystemMetaObject.forObject(rich);
+        //嵌套的属性对象设置和获取, 这里使用了 数组语法.
         meta.setValue("richType.richMap[key]", "foo");
         assertEquals("foo", meta.getValue("richType.richMap[key]"));
     }
@@ -85,10 +94,15 @@ public class MetaObjectTest {
     public void shouldGetAndSetListItem() {
         RichType rich = new RichType();
         MetaObject meta = SystemMetaObject.forObject(rich);
+        //通过 MetaObject 对象操作 集合类型的属性,使用 数组语法.
         meta.setValue("richList[0]", "foo");
         assertEquals("foo", meta.getValue("richList[0]"));
     }
 
+
+    /**
+     * 这个和上面的一个 test 没看出来有啥区别啊
+     */
     @Test
     public void shouldSetAndGetSelfListItem() {
         RichType rich = new RichType();
@@ -101,6 +115,7 @@ public class MetaObjectTest {
     public void shouldGetAndSetNestedListItem() {
         RichType rich = new RichType();
         MetaObject meta = SystemMetaObject.forObject(rich);
+        //通过 MetaObject 对象操作 嵌套属性的集合,使用数组语法.
         meta.setValue("richType.richList[0]", "foo");
         assertEquals("foo", meta.getValue("richType.richList[0]"));
     }
@@ -109,6 +124,7 @@ public class MetaObjectTest {
     public void shouldGetReadablePropertyNames() {
         RichType rich = new RichType();
         MetaObject meta = SystemMetaObject.forObject(rich);
+        //获取所有的可读属性列表
         String[] readables = meta.getGetterNames();
         assertEquals(5, readables.length);
         for (String readable : readables) {
@@ -122,10 +138,13 @@ public class MetaObjectTest {
     public void shouldGetWriteablePropertyNames() {
         RichType rich = new RichType();
         MetaObject meta = SystemMetaObject.forObject(rich);
+        //获取所有可写属性列表
         String[] writeables = meta.getSetterNames();
         assertEquals(5, writeables.length);
         for (String writeable : writeables) {
+            //判断是否存在指定get 方法
             assertTrue(meta.hasSetter(writeable));
+            //判断是否存在指定 set 方法
             assertTrue(meta.hasSetter("richType." + writeable));
         }
         assertTrue(meta.hasSetter("richType"));
