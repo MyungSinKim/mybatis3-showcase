@@ -13,7 +13,25 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+package com.ly.zmn48644.mybatis.logging;
+
 /**
- * Type handlers.
+ * @author Clinton Begin
  */
-package com.ly.zmn48644.mybatis.type;
+public interface Log {
+
+  boolean isDebugEnabled();
+
+  boolean isTraceEnabled();
+
+  void error(String s, Throwable e);
+
+  void error(String s);
+
+  void debug(String s);
+
+  void trace(String s);
+
+  void warn(String s);
+
+}
