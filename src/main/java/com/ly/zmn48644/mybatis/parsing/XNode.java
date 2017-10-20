@@ -296,11 +296,14 @@ public class XNode {
      * @return
      */
     public String getStringAttribute(String name) {
+        //给定属性名,获取当前节点的属性值,设置默认值为null,没有解析到返回null.
         return getStringAttribute(name, null);
     }
 
     public String getStringAttribute(String name, String def) {
+        //从 attributes 获取配置,这个配置在节点创建的时候已经初始化完成.
         String value = attributes.getProperty(name);
+        //如果没有获取到,返回传入的默认值.
         if (value == null) {
             return def;
         } else {
@@ -424,13 +427,17 @@ public class XNode {
 
     /**
      * 获取 当前节点的 attributes 中 name 和 value 返回 Properties
+     * <p>
+     * 此方法 在 XMLConfigBuilder.settingsAsProperties 方法中调用, 用于解析配置文件中的 settings 元素节点数据.
      *
      * @return
      */
     public Properties getChildrenAsProperties() {
         Properties properties = new Properties();
         for (XNode child : getChildren()) {
+            //获取配置key
             String name = child.getStringAttribute("name");
+            //获取配置key的值.
             String value = child.getStringAttribute("value");
             if (name != null && value != null) {
                 properties.setProperty(name, value);

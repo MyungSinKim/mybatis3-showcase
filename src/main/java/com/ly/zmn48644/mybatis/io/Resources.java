@@ -230,6 +230,9 @@ public class Resources {
     /*
      * 加载一个类文件
      *
+     * 此方法在 XMLConfigBuilder.loadCustomVfs 中被调用,用于 加载 自定义虚拟文件系统实现类.
+     * 此方法在 XMLConfigBuilder.typeAliasesElement  中被调用,用于加载 别名配置中的类.
+     *
      * @param 要加载的类名
      * @return 加载到的类对象
      * @throws ClassNotFoundException 如果类没有找到抛出没有找到类异常

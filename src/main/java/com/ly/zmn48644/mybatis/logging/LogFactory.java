@@ -78,8 +78,9 @@ public final class LogFactory {
 
     /**
      * 这组方法都是 静态的同步方法,去加载具体的日志实现适配器
-     *
+     * <p>
      * 这个方法没有在静态代码块中
+     *
      * @param clazz
      */
     public static synchronized void useCustomLogging(Class<? extends Log> clazz) {
@@ -87,30 +88,37 @@ public final class LogFactory {
     }
 
     public static synchronized void useSlf4jLogging() {
+        //尝试设置实现
         setImplementation(com.ly.zmn48644.mybatis.logging.slf4j.Slf4jImpl.class);
     }
 
     public static synchronized void useCommonsLogging() {
+        //尝试设置实现
         setImplementation(com.ly.zmn48644.mybatis.logging.commons.JakartaCommonsLoggingImpl.class);
     }
 
     public static synchronized void useLog4JLogging() {
+        //尝试设置实现
         setImplementation(com.ly.zmn48644.mybatis.logging.log4j.Log4jImpl.class);
     }
 
     public static synchronized void useLog4J2Logging() {
+        //尝试设置实现
         setImplementation(com.ly.zmn48644.mybatis.logging.log4j2.Log4j2Impl.class);
     }
 
     public static synchronized void useJdkLogging() {
+        //尝试设置实现
         setImplementation(com.ly.zmn48644.mybatis.logging.jdk14.Jdk14LoggingImpl.class);
     }
 
     public static synchronized void useStdOutLogging() {
+        //尝试设置实现
         setImplementation(com.ly.zmn48644.mybatis.logging.stdout.StdOutImpl.class);
     }
 
     public static synchronized void useNoLogging() {
+        //尝试设置实现
         setImplementation(com.ly.zmn48644.mybatis.logging.nologging.NoLoggingImpl.class);
     }
 
@@ -119,7 +127,6 @@ public final class LogFactory {
         //如果没有找到合适的日志实现,才会执行
         if (logConstructor == null) {
             try {
-
                 //注意这里竟然调用的是 run() 方法. 而不是start(),并没有开启新的线程
                 runnable.run();
             } catch (Throwable t) {

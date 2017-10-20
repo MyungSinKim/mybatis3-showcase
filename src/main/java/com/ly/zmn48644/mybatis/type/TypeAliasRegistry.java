@@ -12,7 +12,7 @@ import java.util.*;
 
 
 /**
- * 别名注册器
+ * 别名映射,注册中心,保存了别名和class之间的映射关系
  */
 public class TypeAliasRegistry {
 
@@ -103,10 +103,20 @@ public class TypeAliasRegistry {
         }
     }
 
+
+    /**
+     * 给定一个包名,将包下面所有的类都注册到别名映射中心里.
+     * @param packageName
+     */
     public void registerAliases(String packageName) {
         registerAliases(packageName, Object.class);
     }
 
+    /**
+     * 给定一个包名,将包下面所有的类都注册到别名映射中心里,可以限定父类.
+     * @param packageName
+     * @param superType
+     */
     public void registerAliases(String packageName, Class<?> superType) {
         ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<Class<?>>();
         resolverUtil.find(new ResolverUtil.IsA(superType), packageName);
@@ -120,6 +130,9 @@ public class TypeAliasRegistry {
         }
     }
 
+    /**
+     * @param type
+     */
     public void registerAlias(Class<?> type) {
         String alias = type.getSimpleName();
         Alias aliasAnnotation = type.getAnnotation(Alias.class);
@@ -129,6 +142,10 @@ public class TypeAliasRegistry {
         registerAlias(alias, type);
     }
 
+    /**
+     * @param alias
+     * @param value
+     */
     public void registerAlias(String alias, Class<?> value) {
         if (alias == null) {
             throw new TypeException("The parameter alias cannot be null");
