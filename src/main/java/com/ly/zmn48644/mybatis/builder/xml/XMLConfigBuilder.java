@@ -7,6 +7,7 @@ import com.ly.zmn48644.mybatis.builder.BuilderException;
 import com.ly.zmn48644.mybatis.executor.ErrorContext;
 import com.ly.zmn48644.mybatis.io.Resources;
 import com.ly.zmn48644.mybatis.io.VFS;
+import com.ly.zmn48644.mybatis.logging.Log;
 import com.ly.zmn48644.mybatis.parsing.XNode;
 import com.ly.zmn48644.mybatis.parsing.XPathParser;
 import com.ly.zmn48644.mybatis.reflection.DefaultReflectorFactory;
@@ -14,8 +15,12 @@ import com.ly.zmn48644.mybatis.reflection.MetaClass;
 import com.ly.zmn48644.mybatis.reflection.ReflectorFactory;
 import com.ly.zmn48644.mybatis.reflection.factory.ObjectFactory;
 import com.ly.zmn48644.mybatis.reflection.warpper.ObjectWrapperFactory;
+import com.ly.zmn48644.mybatis.session.AutoMappingBehavior;
 import com.ly.zmn48644.mybatis.session.Configuration;
+import com.ly.zmn48644.mybatis.session.ExecutorType;
+import com.ly.zmn48644.mybatis.session.LocalCacheScope;
 import com.ly.zmn48644.mybatis.type.JdbcType;
+import com.ly.zmn48644.mybatis.type.TypeHandler;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -108,7 +113,10 @@ public class XMLConfigBuilder extends BaseBuilder {
             propertiesElement(root.evalNode("properties"));
 
             //解析配置文件中的 settings 元素, 使用 settingsAsProperties 方法返回一个 Properties 对象.
+            //settings节点是 mybatis 的全局性 配置, 这里的配置回改变 mybatis 的运行时行为.
             Properties settings = settingsAsProperties(root.evalNode("settings"));
+
+
             //如果配置了,自定义的虚拟文件系统,则加载.
             loadCustomVfs(settings);
 
@@ -125,7 +133,7 @@ public class XMLConfigBuilder extends BaseBuilder {
             //解析 reflectorFactory 如果有自定义则替换默认的反射工厂
             reflectorFactoryElement(root.evalNode("reflectorFactory"));
             //TODO 临时注释
-            //settingsElement(settings);
+            settingsElement(settings);
             //TODO 临时注释
             //environmentsElement(root.evalNode("environments"));
             //TODO 临时注释
@@ -157,8 +165,7 @@ public class XMLConfigBuilder extends BaseBuilder {
 
         //这里获取到 Configuration 类的 MetaClass 信息
         MetaClass metaConfig = MetaClass.forClass(Configuration.class, localReflectorFactory);
-        //判断每一个属性是否存在 set方法.
-        //TODO 这里还没完全理解为什么要判断.
+        //检测 key 指定的属性 在 configuration 中有没有对应的 set 方法.
         for (Object key : props.keySet()) {
             if (!metaConfig.hasSetter(String.valueOf(key))) {
                 throw new BuilderException("The setting " + key + " is not known.  Make sure you spelled it correctly (case sensitive).");
@@ -269,58 +276,110 @@ public class XMLConfigBuilder extends BaseBuilder {
 
     private void propertiesElement(XNode context) throws Exception {
         if (context != null) {
+            //解析传入元素中的 name和value 属性,并且设置到 properties 对象中.
             Properties defaults = context.getChildrenAsProperties();
+            //解析 resource 和 url 确定配置文件的位置
             String resource = context.getStringAttribute("resource");
             String url = context.getStringAttribute("url");
+
+            //如果 resource 和 url 均没有指定 抛出异常
             if (resource != null && url != null) {
                 throw new BuilderException("The properties element cannot specify both a URL and a resource based property file reference.  Please specify one or the other.");
             }
             if (resource != null) {
+                //如果 配置了 resource 则加载所有配置
                 defaults.putAll(Resources.getResourceAsProperties(resource));
             } else if (url != null) {
+                //如果 配置了 url 则根据 url 加载配置
                 defaults.putAll(Resources.getUrlAsProperties(url));
             }
             Properties vars = configuration.getVariables();
             if (vars != null) {
+                //将 configuration 配置中的数据 放入 defaults中,合并两部分的配置
                 defaults.putAll(vars);
             }
+            //更新 XpathParser 和 Configuration 中的配置数据
             parser.setVariables(defaults);
             configuration.setVariables(defaults);
         }
     }
 
-//  private void settingsElement(Properties props) throws Exception {
-//    configuration.setAutoMappingBehavior(AutoMappingBehavior.valueOf(props.getProperty("autoMappingBehavior", "PARTIAL")));
-//    configuration.setAutoMappingUnknownColumnBehavior(AutoMappingUnknownColumnBehavior.valueOf(props.getProperty("autoMappingUnknownColumnBehavior", "NONE")));
-//    configuration.setCacheEnabled(booleanValueOf(props.getProperty("cacheEnabled"), true));
-//    configuration.setProxyFactory((ProxyFactory) createInstance(props.getProperty("proxyFactory")));
-//    configuration.setLazyLoadingEnabled(booleanValueOf(props.getProperty("lazyLoadingEnabled"), false));
-//    configuration.setAggressiveLazyLoading(booleanValueOf(props.getProperty("aggressiveLazyLoading"), false));
-//    configuration.setMultipleResultSetsEnabled(booleanValueOf(props.getProperty("multipleResultSetsEnabled"), true));
-//    configuration.setUseColumnLabel(booleanValueOf(props.getProperty("useColumnLabel"), true));
-//    configuration.setUseGeneratedKeys(booleanValueOf(props.getProperty("useGeneratedKeys"), false));
-//    configuration.setDefaultExecutorType(ExecutorType.valueOf(props.getProperty("defaultExecutorType", "SIMPLE")));
-//    configuration.setDefaultStatementTimeout(integerValueOf(props.getProperty("defaultStatementTimeout"), null));
-//    configuration.setDefaultFetchSize(integerValueOf(props.getProperty("defaultFetchSize"), null));
-//    configuration.setMapUnderscoreToCamelCase(booleanValueOf(props.getProperty("mapUnderscoreToCamelCase"), false));
-//    configuration.setSafeRowBoundsEnabled(booleanValueOf(props.getProperty("safeRowBoundsEnabled"), false));
-//    configuration.setLocalCacheScope(LocalCacheScope.valueOf(props.getProperty("localCacheScope", "SESSION")));
-//    configuration.setJdbcTypeForNull(JdbcType.valueOf(props.getProperty("jdbcTypeForNull", "OTHER")));
-//    configuration.setLazyLoadTriggerMethods(stringSetValueOf(props.getProperty("lazyLoadTriggerMethods"), "equals,clone,hashCode,toString"));
-//    configuration.setSafeResultHandlerEnabled(booleanValueOf(props.getProperty("safeResultHandlerEnabled"), true));
-//    configuration.setDefaultScriptingLanguage(resolveClass(props.getProperty("defaultScriptingLanguage")));
-//    @SuppressWarnings("unchecked")
-//    Class<? extends TypeHandler> typeHandler = (Class<? extends TypeHandler>)resolveClass(props.getProperty("defaultEnumTypeHandler"));
-//    configuration.setDefaultEnumTypeHandler(typeHandler);
-//    configuration.setCallSettersOnNulls(booleanValueOf(props.getProperty("callSettersOnNulls"), false));
-//    configuration.setUseActualParamName(booleanValueOf(props.getProperty("useActualParamName"), true));
-//    configuration.setReturnInstanceForEmptyRow(booleanValueOf(props.getProperty("returnInstanceForEmptyRow"), false));
-//    configuration.setLogPrefix(props.getProperty("logPrefix"));
-//    @SuppressWarnings("unchecked")
-//    Class<? extends Log> logImpl = (Class<? extends Log>)resolveClass(props.getProperty("logImpl"));
-//    configuration.setLogImpl(logImpl);
-//    configuration.setConfigurationFactory(resolveClass(props.getProperty("configurationFactory")));
-//  }
+    private void settingsElement(Properties props) throws Exception {
+        //TODO 此配置需要写代码验证
+        //结果集映射配置, 默认配置为 PARTIAL.
+        configuration.setAutoMappingBehavior(AutoMappingBehavior.valueOf(props.getProperty("autoMappingBehavior", "PARTIAL")));
+
+        //TODO 临时注释 涉及到 mapping 模块
+        //configuration.setAutoMappingUnknownColumnBehavior(AutoMappingUnknownColumnBehavior.valueOf(props.getProperty("autoMappingUnknownColumnBehavior", "NONE")));
+
+        //全局性的配置是否启用缓存
+        configuration.setCacheEnabled(booleanValueOf(props.getProperty("cacheEnabled"), true));
+
+        //TODO 临时注释 涉及到 executor 模块
+        //configuration.setProxyFactory((ProxyFactory) createInstance(props.getProperty("proxyFactory")));
+
+        //全局配置是否启用懒加载
+        configuration.setLazyLoadingEnabled(booleanValueOf(props.getProperty("lazyLoadingEnabled"), false));
+
+        //从字面意思来说是 积极懒加载 配置.
+        //如果配置为 true , 如果调用了一个懒加载的属性, 其他懒加载的属性也会触发加载, 默认为 false.
+        configuration.setAggressiveLazyLoading(booleanValueOf(props.getProperty("aggressiveLazyLoading"), false));
+
+        //全局配置 是否允许单一语句返回多结果集
+        configuration.setMultipleResultSetsEnabled(booleanValueOf(props.getProperty("multipleResultSetsEnabled"), true));
+
+        //是否使用列别名替换列名
+        configuration.setUseColumnLabel(booleanValueOf(props.getProperty("useColumnLabel"), true));
+
+        //全局配置 是否使用自动生成的主键 , 也可以在 insert 语句总专门指定.
+        configuration.setUseGeneratedKeys(booleanValueOf(props.getProperty("useGeneratedKeys"), false));
+
+
+        //TODO 暂时不深入
+        //全局配置默认执行器
+        configuration.setDefaultExecutorType(ExecutorType.valueOf(props.getProperty("defaultExecutorType", "SIMPLE")));
+
+        //全局配置 设置超时时间，它决定驱动等待数据库响应的秒数
+        configuration.setDefaultStatementTimeout(integerValueOf(props.getProperty("defaultStatementTimeout"), null));
+
+        //TODO 暂时不深入
+        //和数据库读取数据的模式有关
+        configuration.setDefaultFetchSize(integerValueOf(props.getProperty("defaultFetchSize"), null));
+
+        //启用 下换线命名 到驼峰命名 属性映射,默认不启用.
+        configuration.setMapUnderscoreToCamelCase(booleanValueOf(props.getProperty("mapUnderscoreToCamelCase"), false));
+
+        //是否允许在嵌套语句中使用分页
+        configuration.setSafeRowBoundsEnabled(booleanValueOf(props.getProperty("safeRowBoundsEnabled"), false));
+
+
+        //TODO 暂时不深入
+        //本地缓存范围
+        configuration.setLocalCacheScope(LocalCacheScope.valueOf(props.getProperty("localCacheScope", "SESSION")));
+
+        //当没有为参数提供特定的 JDBC 类型时，为空值指定 JDBC 类型。
+        configuration.setJdbcTypeForNull(JdbcType.valueOf(props.getProperty("jdbcTypeForNull", "OTHER")));
+
+        //指定触发加载的方法
+        configuration.setLazyLoadTriggerMethods(stringSetValueOf(props.getProperty("lazyLoadTriggerMethods"), "equals,clone,hashCode,toString"));
+
+        //TODO 暂时不深入
+        configuration.setSafeResultHandlerEnabled(booleanValueOf(props.getProperty("safeResultHandlerEnabled"), true));
+
+        //指定所使用的语言默认为动态SQL生成
+//        configuration.setDefaultScriptingLanguage(resolveClass(props.getProperty("defaultScriptingLanguage")));
+//        @SuppressWarnings("unchecked")
+//        Class<? extends TypeHandler> typeHandler = (Class<? extends TypeHandler>) resolveClass(props.getProperty("defaultEnumTypeHandler"));
+//        configuration.setDefaultEnumTypeHandler(typeHandler);
+//        configuration.setCallSettersOnNulls(booleanValueOf(props.getProperty("callSettersOnNulls"), false));
+//        configuration.setUseActualParamName(booleanValueOf(props.getProperty("useActualParamName"), true));
+//        configuration.setReturnInstanceForEmptyRow(booleanValueOf(props.getProperty("returnInstanceForEmptyRow"), false));
+//        configuration.setLogPrefix(props.getProperty("logPrefix"));
+//        @SuppressWarnings("unchecked")
+//        Class<? extends Log> logImpl = (Class<? extends Log>) resolveClass(props.getProperty("logImpl"));
+//        configuration.setLogImpl(logImpl);
+//        configuration.setConfigurationFactory(resolveClass(props.getProperty("configurationFactory")));
+    }
 
 //  private void environmentsElement(XNode context) throws Exception {
 //    if (context != null) {
