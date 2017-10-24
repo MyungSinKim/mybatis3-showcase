@@ -11,6 +11,7 @@ import com.ly.zmn48644.mybatis.reflection.warpper.DefaultObjectWrapperFactory;
 import com.ly.zmn48644.mybatis.reflection.warpper.ObjectWrapperFactory;
 import com.ly.zmn48644.mybatis.type.JdbcType;
 import com.ly.zmn48644.mybatis.type.TypeAliasRegistry;
+import com.ly.zmn48644.mybatis.type.TypeHandler;
 import com.ly.zmn48644.mybatis.type.TypeHandlerRegistry;
 
 import java.util.Arrays;
@@ -24,7 +25,22 @@ import java.util.Set;
 public class Configuration {
     //TODO 未完成 Configuration
 
+    /**
+     * Configuration factory class.
+     * Used to create Configuration for loading deserialized unread properties.
+     */
+    protected Class<?> configurationFactory;
 
+    protected boolean returnInstanceForEmptyRow;
+
+    protected String logPrefix;
+
+    //是否使用实际参数名,默认为false
+    //mybatis传多个参数(不使用@param注解情况下),3.4.2版本之后使用#{0}-#{n}引起的参数绑定异常.
+    //3.4.2版本之后settings属性中useActualParamName参数的默认值为true,参数才可以不使用@param.
+    protected boolean useActualParamName = true;
+
+    protected boolean callSettersOnNulls;
     //触发懒加载属性加载的方法
     protected Set<String> lazyLoadTriggerMethods = new HashSet<String>(Arrays.asList(new String[]{"equals", "clone", "hashCode", "toString"}));
     protected JdbcType jdbcTypeForNull = JdbcType.OTHER;
@@ -81,6 +97,25 @@ public class Configuration {
 
     //对象包装器工厂
     protected ObjectWrapperFactory objectWrapperFactory = new DefaultObjectWrapperFactory();
+
+    /**
+     * 设置默认枚举类型处理器
+     *
+     * @param typeHandler
+     */
+    public void setDefaultEnumTypeHandler(Class<? extends TypeHandler> typeHandler) {
+        if (typeHandler != null) {
+            getTypeHandlerRegistry().setDefaultEnumTypeHandler(typeHandler);
+        }
+    }
+
+    public boolean isCallSettersOnNulls() {
+        return callSettersOnNulls;
+    }
+
+    public void setCallSettersOnNulls(boolean callSettersOnNulls) {
+        this.callSettersOnNulls = callSettersOnNulls;
+    }
 
     public TypeAliasRegistry getTypeAliasRegistry() {
         return typeAliasRegistry;
@@ -267,5 +302,37 @@ public class Configuration {
 
     public void setLazyLoadTriggerMethods(Set<String> lazyLoadTriggerMethods) {
         this.lazyLoadTriggerMethods = lazyLoadTriggerMethods;
+    }
+
+    public boolean isUseActualParamName() {
+        return useActualParamName;
+    }
+
+    public void setUseActualParamName(boolean useActualParamName) {
+        this.useActualParamName = useActualParamName;
+    }
+
+    public boolean isReturnInstanceForEmptyRow() {
+        return returnInstanceForEmptyRow;
+    }
+
+    public void setReturnInstanceForEmptyRow(boolean returnInstanceForEmptyRow) {
+        this.returnInstanceForEmptyRow = returnInstanceForEmptyRow;
+    }
+
+    public String getLogPrefix() {
+        return logPrefix;
+    }
+
+    public void setLogPrefix(String logPrefix) {
+        this.logPrefix = logPrefix;
+    }
+
+    public Class<?> getConfigurationFactory() {
+        return configurationFactory;
+    }
+
+    public void setConfigurationFactory(Class<?> configurationFactory) {
+        this.configurationFactory = configurationFactory;
     }
 }

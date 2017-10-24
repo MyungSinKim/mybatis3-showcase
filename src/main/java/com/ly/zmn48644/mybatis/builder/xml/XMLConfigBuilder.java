@@ -366,19 +366,34 @@ public class XMLConfigBuilder extends BaseBuilder {
         //TODO 暂时不深入
         configuration.setSafeResultHandlerEnabled(booleanValueOf(props.getProperty("safeResultHandlerEnabled"), true));
 
+
+        //临时注释 涉及到 scripting 模块 暂不深入
         //指定所使用的语言默认为动态SQL生成
-//        configuration.setDefaultScriptingLanguage(resolveClass(props.getProperty("defaultScriptingLanguage")));
-//        @SuppressWarnings("unchecked")
-//        Class<? extends TypeHandler> typeHandler = (Class<? extends TypeHandler>) resolveClass(props.getProperty("defaultEnumTypeHandler"));
-//        configuration.setDefaultEnumTypeHandler(typeHandler);
-//        configuration.setCallSettersOnNulls(booleanValueOf(props.getProperty("callSettersOnNulls"), false));
-//        configuration.setUseActualParamName(booleanValueOf(props.getProperty("useActualParamName"), true));
-//        configuration.setReturnInstanceForEmptyRow(booleanValueOf(props.getProperty("returnInstanceForEmptyRow"), false));
-//        configuration.setLogPrefix(props.getProperty("logPrefix"));
-//        @SuppressWarnings("unchecked")
-//        Class<? extends Log> logImpl = (Class<? extends Log>) resolveClass(props.getProperty("logImpl"));
-//        configuration.setLogImpl(logImpl);
-//        configuration.setConfigurationFactory(resolveClass(props.getProperty("configurationFactory")));
+        //configuration.setDefaultScriptingLanguage(resolveClass(props.getProperty("defaultScriptingLanguage")));
+
+        @SuppressWarnings("unchecked")
+        //解析默认枚举处理器
+                Class<? extends TypeHandler> typeHandler = (Class<? extends TypeHandler>) resolveClass(props.getProperty("defaultEnumTypeHandler"));
+        configuration.setDefaultEnumTypeHandler(typeHandler);
+
+        //当结果集中含有Null值时是否执行映射对象的setter或者Map对象的put方法。
+        configuration.setCallSettersOnNulls(booleanValueOf(props.getProperty("callSettersOnNulls"), false));
+
+        //是否使用实际参数名
+        configuration.setUseActualParamName(booleanValueOf(props.getProperty("useActualParamName"), true));
+
+        //如何处理空行配置
+        configuration.setReturnInstanceForEmptyRow(booleanValueOf(props.getProperty("returnInstanceForEmptyRow"), false));
+        //指定 MyBatis 增加到日志名称的前缀。
+        configuration.setLogPrefix(props.getProperty("logPrefix"));
+
+        //指定日志实现
+        @SuppressWarnings("unchecked")
+        Class<? extends Log> logImpl = (Class<? extends Log>) resolveClass(props.getProperty("logImpl"));
+        configuration.setLogImpl(logImpl);
+
+        // configuration 工厂类配置
+        configuration.setConfigurationFactory(resolveClass(props.getProperty("configurationFactory")));
     }
 
 //  private void environmentsElement(XNode context) throws Exception {
