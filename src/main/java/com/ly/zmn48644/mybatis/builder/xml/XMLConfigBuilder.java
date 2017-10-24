@@ -4,10 +4,12 @@ package com.ly.zmn48644.mybatis.builder.xml;
 
 import com.ly.zmn48644.mybatis.builder.BaseBuilder;
 import com.ly.zmn48644.mybatis.builder.BuilderException;
+import com.ly.zmn48644.mybatis.datasource.DataSourceFactory;
 import com.ly.zmn48644.mybatis.executor.ErrorContext;
 import com.ly.zmn48644.mybatis.io.Resources;
 import com.ly.zmn48644.mybatis.io.VFS;
 import com.ly.zmn48644.mybatis.logging.Log;
+import com.ly.zmn48644.mybatis.mapping.Environment;
 import com.ly.zmn48644.mybatis.parsing.XNode;
 import com.ly.zmn48644.mybatis.parsing.XPathParser;
 import com.ly.zmn48644.mybatis.reflection.DefaultReflectorFactory;
@@ -19,9 +21,11 @@ import com.ly.zmn48644.mybatis.session.AutoMappingBehavior;
 import com.ly.zmn48644.mybatis.session.Configuration;
 import com.ly.zmn48644.mybatis.session.ExecutorType;
 import com.ly.zmn48644.mybatis.session.LocalCacheScope;
+import com.ly.zmn48644.mybatis.transaction.TransactionFactory;
 import com.ly.zmn48644.mybatis.type.JdbcType;
 import com.ly.zmn48644.mybatis.type.TypeHandler;
 
+import javax.sql.DataSource;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Properties;
@@ -134,8 +138,9 @@ public class XMLConfigBuilder extends BaseBuilder {
             reflectorFactoryElement(root.evalNode("reflectorFactory"));
             //TODO 临时注释
             settingsElement(settings);
-            //TODO 临时注释
-            //environmentsElement(root.evalNode("environments"));
+
+            //解析 环境 配置
+            environmentsElement(root.evalNode("environments"));
             //TODO 临时注释
             //databaseIdProviderElement(root.evalNode("databaseIdProvider"));
 
@@ -396,25 +401,31 @@ public class XMLConfigBuilder extends BaseBuilder {
         configuration.setConfigurationFactory(resolveClass(props.getProperty("configurationFactory")));
     }
 
-//  private void environmentsElement(XNode context) throws Exception {
-//    if (context != null) {
-//      if (environment == null) {
-//        environment = context.getStringAttribute("default");
-//      }
-//      for (XNode child : context.getChildren()) {
-//        String id = child.getStringAttribute("id");
-//        if (isSpecifiedEnvironment(id)) {
-//          TransactionFactory txFactory = transactionManagerElement(child.evalNode("transactionManager"));
-//          DataSourceFactory dsFactory = dataSourceElement(child.evalNode("dataSource"));
-//          DataSource dataSource = dsFactory.getDataSource();
-//          Environment.Builder environmentBuilder = new Environment.Builder(id)
-//              .transactionFactory(txFactory)
-//              .dataSource(dataSource);
-//          configuration.setEnvironment(environmentBuilder.build());
-//        }
-//      }
-//    }
-//  }
+    /**
+     * 解析
+     * @param context
+     * @throws Exception
+     */
+    private void environmentsElement(XNode context) throws Exception {
+        if (context != null) {
+            if (environment == null) {
+                //获取 default 环境配置
+                environment = context.getStringAttribute("default");
+            }
+            for (XNode child : context.getChildren()) {
+                String id = child.getStringAttribute("id");
+                if (isSpecifiedEnvironment(id)) {
+                    TransactionFactory txFactory = transactionManagerElement(child.evalNode("transactionManager"));
+                    DataSourceFactory dsFactory = dataSourceElement(child.evalNode("dataSource"));
+                    DataSource dataSource = dsFactory.getDataSource();
+                    Environment.Builder environmentBuilder = new Environment.Builder(id)
+                            .transactionFactory(txFactory)
+                            .dataSource(dataSource);
+                    configuration.setEnvironment(environmentBuilder.build());
+                }
+            }
+        }
+    }
 
 //  private void databaseIdProviderElement(XNode context) throws Exception {
 //    DatabaseIdProvider databaseIdProvider = null;
@@ -435,27 +446,27 @@ public class XMLConfigBuilder extends BaseBuilder {
 //    }
 //  }
 
-//  private TransactionFactory transactionManagerElement(XNode context) throws Exception {
-//    if (context != null) {
-//      String type = context.getStringAttribute("type");
-//      Properties props = context.getChildrenAsProperties();
-//      TransactionFactory factory = (TransactionFactory) resolveClass(type).newInstance();
-//      factory.setProperties(props);
-//      return factory;
-//    }
-//    throw new BuilderException("Environment declaration requires a TransactionFactory.");
-//  }
+    private TransactionFactory transactionManagerElement(XNode context) throws Exception {
+        if (context != null) {
+            String type = context.getStringAttribute("type");
+            Properties props = context.getChildrenAsProperties();
+            TransactionFactory factory = (TransactionFactory) resolveClass(type).newInstance();
+            factory.setProperties(props);
+            return factory;
+        }
+        throw new BuilderException("Environment declaration requires a TransactionFactory.");
+    }
 
-//  private DataSourceFactory dataSourceElement(XNode context) throws Exception {
-//    if (context != null) {
-//      String type = context.getStringAttribute("type");
-//      Properties props = context.getChildrenAsProperties();
-//      DataSourceFactory factory = (DataSourceFactory) resolveClass(type).newInstance();
-//      factory.setProperties(props);
-//      return factory;
-//    }
-//    throw new BuilderException("Environment declaration requires a DataSourceFactory.");
-//  }
+    private DataSourceFactory dataSourceElement(XNode context) throws Exception {
+        if (context != null) {
+            String type = context.getStringAttribute("type");
+            Properties props = context.getChildrenAsProperties();
+            DataSourceFactory factory = (DataSourceFactory) resolveClass(type).newInstance();
+            factory.setProperties(props);
+            return factory;
+        }
+        throw new BuilderException("Environment declaration requires a DataSourceFactory.");
+    }
 
     private void typeHandlerElement(XNode parent) throws Exception {
         if (parent != null) {

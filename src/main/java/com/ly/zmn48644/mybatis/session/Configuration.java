@@ -3,6 +3,7 @@ package com.ly.zmn48644.mybatis.session;
 
 import com.ly.zmn48644.mybatis.io.VFS;
 import com.ly.zmn48644.mybatis.logging.Log;
+import com.ly.zmn48644.mybatis.mapping.Environment;
 import com.ly.zmn48644.mybatis.reflection.DefaultReflectorFactory;
 import com.ly.zmn48644.mybatis.reflection.ReflectorFactory;
 import com.ly.zmn48644.mybatis.reflection.factory.DefaultObjectFactory;
@@ -24,6 +25,9 @@ import java.util.Set;
  */
 public class Configuration {
     //TODO 未完成 Configuration
+
+
+    protected Environment environment;
 
     /**
      * Configuration factory class.
@@ -334,5 +338,13 @@ public class Configuration {
 
     public void setConfigurationFactory(Class<?> configurationFactory) {
         this.configurationFactory = configurationFactory;
+    }
+
+    public Environment getEnvironment() {
+        return environment;
+    }
+
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
     }
 }

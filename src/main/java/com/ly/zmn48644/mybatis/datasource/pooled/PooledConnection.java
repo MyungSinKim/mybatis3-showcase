@@ -1,7 +1,9 @@
 
 package com.ly.zmn48644.mybatis.datasource.pooled;
 
-import org.apache.ibatis.reflection.ExceptionUtil;
+
+
+import com.ly.zmn48644.mybatis.reflection.ExceptionUtil;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -9,9 +11,7 @@ import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-/**
- * @author Clinton Begin
- */
+
 class PooledConnection implements InvocationHandler {
 
   private static final String CLOSE = "close";
