@@ -4,20 +4,43 @@ package com.ly.zmn48644.mybatis.datasource.pooled;
 import java.util.ArrayList;
 import java.util.List;
 
-
+/**
+ * 此类用于管理 PooledConnection 对象状态的组件
+ */
 public class PoolState {
 
+    //指向池化数据源
     protected PooledDataSource dataSource;
 
+    //维护的空闲连接对象列表
     protected final List<PooledConnection> idleConnections = new ArrayList<PooledConnection>();
+    //维护的活动连接对象列表
     protected final List<PooledConnection> activeConnections = new ArrayList<PooledConnection>();
+
+
+    //下面十一组用于统计的字段
+    //请求数据库连接册数
     protected long requestCount = 0;
+
+    //获取连接的累计时间
     protected long accumulatedRequestTime = 0;
+
+    //checkoutTime 是指 应用从连接池中取出连接,到归还连接这段时长.
     protected long accumulatedCheckoutTime = 0;
+
+    //超时连接个数
     protected long claimedOverdueConnectionCount = 0;
+
+    //累计超时时间
     protected long accumulatedCheckoutTimeOfOverdueConnections = 0;
+
+    //累计等待时间
     protected long accumulatedWaitTime = 0;
+
+    //等待次数
     protected long hadToWaitCount = 0;
+
+    //无效连接数
     protected long badConnectionCount = 0;
 
     public PoolState(PooledDataSource dataSource) {
@@ -28,10 +51,19 @@ public class PoolState {
         return requestCount;
     }
 
+
+    /**
+     * 获取平均的 请求连接时长
+     * @return
+     */
     public synchronized long getAverageRequestTime() {
         return requestCount == 0 ? 0 : accumulatedRequestTime / requestCount;
     }
 
+    /**
+     * 获取平均的 等待时长
+     * @return
+     */
     public synchronized long getAverageWaitTime() {
         return hadToWaitCount == 0 ? 0 : accumulatedWaitTime / hadToWaitCount;
 
