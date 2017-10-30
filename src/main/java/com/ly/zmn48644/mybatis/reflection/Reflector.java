@@ -80,7 +80,7 @@ public class Reflector {
                 //判断系统权限判断是否能够访问私有方法
                 if (canAccessPrivateMethods()) {
                     try {
-                        //设置不进行访问检查,调用效率.
+                        //设置不进行访问检查,调用效率会提高
                         constructor.setAccessible(true);
                     } catch (Exception e) {
                         // Ignored. This is only a final precaution, nothing we can do.
@@ -88,7 +88,7 @@ public class Reflector {
                 }
                 //判断是否能访问
                 if (constructor.isAccessible()) {
-                    //找到的午餐构造方法 赋值给 defaultConstructor.
+                    //找到的无参构造方法 赋值给 defaultConstructor.
                     this.defaultConstructor = constructor;
                 }
             }

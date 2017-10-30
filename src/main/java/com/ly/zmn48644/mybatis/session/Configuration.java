@@ -5,6 +5,7 @@ import com.ly.zmn48644.mybatis.io.VFS;
 import com.ly.zmn48644.mybatis.logging.Log;
 import com.ly.zmn48644.mybatis.mapping.Environment;
 import com.ly.zmn48644.mybatis.reflection.DefaultReflectorFactory;
+import com.ly.zmn48644.mybatis.reflection.MetaObject;
 import com.ly.zmn48644.mybatis.reflection.ReflectorFactory;
 import com.ly.zmn48644.mybatis.reflection.factory.DefaultObjectFactory;
 import com.ly.zmn48644.mybatis.reflection.factory.ObjectFactory;
@@ -26,6 +27,10 @@ import java.util.Set;
 public class Configuration {
     //TODO 未完成 Configuration
 
+
+    public MetaObject newMetaObject(Object object) {
+        return MetaObject.forObject(object, objectFactory, objectWrapperFactory, reflectorFactory);
+    }
 
     protected Environment environment;
 
