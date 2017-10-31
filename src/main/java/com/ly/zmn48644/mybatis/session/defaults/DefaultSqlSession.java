@@ -11,6 +11,11 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 
+
+/**
+ * 实现SqlSession接口,MyBatis核心业务逻辑的具体实现
+ *
+ */
 public class DefaultSqlSession implements SqlSession {
 
 

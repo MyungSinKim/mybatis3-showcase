@@ -7,7 +7,12 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 
-
+/**
+ * 此接口是MyBatis的业务逻辑核心接口
+ * 此接口定义了MyBatis的核心功能
+ * 此接口的实现类是 DefaultSqlSession
+ * 此接口是从业务层面分析的入口
+ */
 public interface SqlSession extends Closeable {
 
 
@@ -104,6 +109,9 @@ public interface SqlSession extends Closeable {
 
     <T> T getMapper(Class<T> type);
 
-
+    /**
+     * 获取内部的数据库连接对象
+     * @return
+     */
     Connection getConnection();
 }

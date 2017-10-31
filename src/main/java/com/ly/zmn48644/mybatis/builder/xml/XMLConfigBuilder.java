@@ -31,6 +31,10 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.util.Properties;
 
+
+/**
+ * 核心作用就是构建 Configuration 对象
+ */
 public class XMLConfigBuilder extends BaseBuilder {
 
     //是否调用过 parse .

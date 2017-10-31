@@ -53,7 +53,7 @@ public class SqlSessionFactoryBuilder {
             try {
                 reader.close();
             } catch (IOException e) {
-                // Intentionally ignore. Prefer previous error.
+                //忽略此处异常
             }
         }
     }
@@ -75,21 +75,27 @@ public class SqlSessionFactoryBuilder {
             XMLConfigBuilder parser = new XMLConfigBuilder(inputStream, environment, properties);
             return build(parser.parse());
         } catch (Exception e) {
+            //TODO 异常处理机制待深入
             throw ExceptionFactory.wrapException("Error building SqlSession.", e);
         } finally {
+            //TODO 异常处理机制待深入
             ErrorContext.instance().reset();
             try {
                 inputStream.close();
             } catch (IOException e) {
-                // Intentionally ignore. Prefer previous error.
+                //忽略此处异常
             }
         }
     }
 
+    /**
+     * 真正构建 SqlSessionFactory 实现类的方法
+     * @param config
+     * @return
+     */
     public SqlSessionFactory build(Configuration config) {
-
+        //根据 config 对象创建 SqlSessionFactory
         return new DefaultSqlSessionFactory(config);
-
     }
 
 }
