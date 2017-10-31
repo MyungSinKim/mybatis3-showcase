@@ -25,6 +25,7 @@ import com.ly.zmn48644.mybatis.transaction.TransactionFactory;
 import com.ly.zmn48644.mybatis.type.JdbcType;
 import com.ly.zmn48644.mybatis.type.TypeHandler;
 
+
 import javax.sql.DataSource;
 import java.io.InputStream;
 import java.io.Reader;
@@ -126,7 +127,7 @@ public class XMLConfigBuilder extends BaseBuilder {
 
             //解析配置文件中的别名配置.
             typeAliasesElement(root.evalNode("typeAliases"));
-            //TODO 临时注释
+            //TODO 临时注释 涉及到插件模块
             //解析插件模块
             //pluginElement(root.evalNode("plugins"));
             //解析 objectFactory 配置自定义的对象工厂.
@@ -136,7 +137,7 @@ public class XMLConfigBuilder extends BaseBuilder {
             objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
             //解析 reflectorFactory 如果有自定义则替换默认的反射工厂
             reflectorFactoryElement(root.evalNode("reflectorFactory"));
-            //TODO 临时注释
+
             settingsElement(settings);
 
             //解析 环境 配置
@@ -147,7 +148,7 @@ public class XMLConfigBuilder extends BaseBuilder {
             //解析自定义的类型处理器.
             typeHandlerElement(root.evalNode("typeHandlers"));
             //TODO 临时注释
-            //mapperElement(root.evalNode("mappers"));
+            mapperElement(root.evalNode("mappers"));
         } catch (Exception e) {
             throw new BuilderException("Error parsing SQL Mapper Configuration. Cause: " + e, e);
         }
@@ -403,6 +404,7 @@ public class XMLConfigBuilder extends BaseBuilder {
 
     /**
      * 解析
+     *
      * @param context
      * @throws Exception
      */
@@ -495,36 +497,40 @@ public class XMLConfigBuilder extends BaseBuilder {
         }
     }
 
-//  private void mapperElement(XNode parent) throws Exception {
-//    if (parent != null) {
-//      for (XNode child : parent.getChildren()) {
-//        if ("package".equals(child.getName())) {
-//          String mapperPackage = child.getStringAttribute("name");
-//          configuration.addMappers(mapperPackage);
-//        } else {
-//          String resource = child.getStringAttribute("resource");
-//          String url = child.getStringAttribute("url");
-//          String mapperClass = child.getStringAttribute("class");
-//          if (resource != null && url == null && mapperClass == null) {
-//            ErrorContext.instance().resource(resource);
-//            InputStream inputStream = Resources.getResourceAsStream(resource);
+    private void mapperElement(XNode parent) throws Exception {
+        if (parent != null) {
+            for (XNode child : parent.getChildren()) {
+                if ("package".equals(child.getName())) {
+                    String mapperPackage = child.getStringAttribute("name");
+                    //TODO 注释
+                    //configuration.addMappers(mapperPackage);
+                } else {
+                    String resource = child.getStringAttribute("resource");
+                    String url = child.getStringAttribute("url");
+                    String mapperClass = child.getStringAttribute("class");
+                    if (resource != null && url == null && mapperClass == null) {
+                        ErrorContext.instance().resource(resource);
+                        InputStream inputStream = Resources.getResourceAsStream(resource);
+                        //TODO 注释
 //            XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, resource, configuration.getSqlFragments());
 //            mapperParser.parse();
-//          } else if (resource == null && url != null && mapperClass == null) {
-//            ErrorContext.instance().resource(url);
-//            InputStream inputStream = Resources.getUrlAsStream(url);
+                    } else if (resource == null && url != null && mapperClass == null) {
+                        ErrorContext.instance().resource(url);
+                        InputStream inputStream = Resources.getUrlAsStream(url);
+                        //TODO 注释
 //            XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, url, configuration.getSqlFragments());
 //            mapperParser.parse();
-//          } else if (resource == null && url == null && mapperClass != null) {
-//            Class<?> mapperInterface = Resources.classForName(mapperClass);
-//            configuration.addMapper(mapperInterface);
-//          } else {
-//            throw new BuilderException("A mapper element may only specify a url, resource or class, but not more than one.");
-//          }
-//        }
-//      }
-//    }
-//  }
+                    } else if (resource == null && url == null && mapperClass != null) {
+                        Class<?> mapperInterface = Resources.classForName(mapperClass);
+                        //TODO 注释
+                        //configuration.addMapper(mapperInterface);
+                    } else {
+                        throw new BuilderException("A mapper element may only specify a url, resource or class, but not more than one.");
+                    }
+                }
+            }
+        }
+    }
 
     private boolean isSpecifiedEnvironment(String id) {
         if (environment == null) {

@@ -1,11 +1,13 @@
 
 package com.ly.zmn48644.mybatis.binding;
 
-import com.ly.zmn48644.mybatis.io.ResolverUtil;
 import com.ly.zmn48644.mybatis.session.Configuration;
 import com.ly.zmn48644.mybatis.session.SqlSession;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class MapperRegistry {

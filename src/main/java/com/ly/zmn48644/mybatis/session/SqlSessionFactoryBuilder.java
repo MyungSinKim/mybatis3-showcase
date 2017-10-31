@@ -5,6 +5,7 @@ package com.ly.zmn48644.mybatis.session;
 import com.ly.zmn48644.mybatis.builder.xml.XMLConfigBuilder;
 import com.ly.zmn48644.mybatis.exceptions.ExceptionFactory;
 import com.ly.zmn48644.mybatis.executor.ErrorContext;
+import com.ly.zmn48644.mybatis.session.defaults.DefaultSqlSessionFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -86,9 +87,9 @@ public class SqlSessionFactoryBuilder {
     }
 
     public SqlSessionFactory build(Configuration config) {
-        //TODO 临时注释
-        //return new DefaultSqlSessionFactory(config);
-        return null;
+
+        return new DefaultSqlSessionFactory(config);
+
     }
 
 }
