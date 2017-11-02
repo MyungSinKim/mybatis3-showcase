@@ -554,6 +554,16 @@ public class XMLConfigBuilder extends BaseBuilder {
         }
     }
 
+    /**
+     * 初始化配置的映射器
+     * 参考官方文档:http://www.mybatis.org/mybatis-3/zh/configuration.html#mappers
+     * MyBatis提供了四种配置映射器的方式
+     * 第一 使用 resource 配置相对路径的XML
+     * 第二 使用 url 配置指定路径下的XML
+     * 第三
+     * @param parent
+     * @throws Exception
+     */
     private void mapperElement(XNode parent) throws Exception {
         if (parent != null) {
             for (XNode child : parent.getChildren()) {
