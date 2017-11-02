@@ -557,10 +557,11 @@ public class XMLConfigBuilder extends BaseBuilder {
     private void mapperElement(XNode parent) throws Exception {
         if (parent != null) {
             for (XNode child : parent.getChildren()) {
+                //如果配置文件中指定了 package 则获取包名
                 if ("package".equals(child.getName())) {
                     String mapperPackage = child.getStringAttribute("name");
                     //TODO 注释
-                    //configuration.addMappers(mapperPackage);
+                    configuration.addMappers(mapperPackage);
                 } else {
                     String resource = child.getStringAttribute("resource");
                     String url = child.getStringAttribute("url");

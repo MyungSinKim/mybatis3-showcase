@@ -112,6 +112,11 @@ public class Configuration {
     //初始化 Mapper 注册中心
     protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
 
+
+    public void addMappers(String packageName) {
+        mapperRegistry.addMappers(packageName);
+    }
+
     /**
      * @param type
      * @param sqlSession
