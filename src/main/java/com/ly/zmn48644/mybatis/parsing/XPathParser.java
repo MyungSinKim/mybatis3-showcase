@@ -30,7 +30,9 @@ public class XPathParser {
     private boolean validation;
     //实体解析器
     private EntityResolver entityResolver;
-    //配置文件中的变量值
+
+    //这里保存的是 配置文件中 properties 标签中设置的 配置信息
+    //
     private Properties variables;
     //封装的xpath对象
     private XPath xpath;
@@ -141,6 +143,8 @@ public class XPathParser {
 
     /**
      * 设置解析过程中可能需要填充的变量
+     *
+     * 此方法 在  XMLConfigBuilder#propertiesElement 中被使用
      *
      * @param variables
      */

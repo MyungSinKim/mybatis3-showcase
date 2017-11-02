@@ -15,6 +15,9 @@ import java.util.Properties;
 
 /**
  * 此类的build 方法就是mybatis的初始化入口.
+ * 思考为什么有这么多中不同传入参数的build方法.
+ * 原因在于 XMLConfigBuilder的构造方法有三个参数,后两个参数是可选的.
+ * 还有读取的配置文件也有不同类型 比如 reader 或者 inputstream
  */
 public class SqlSessionFactoryBuilder {
 
@@ -41,7 +44,6 @@ public class SqlSessionFactoryBuilder {
      */
     public SqlSessionFactory build(Reader reader, String environment, Properties properties) {
         try {
-
             //这里使用了,建造者模式,将生成组件,和装配组件的逻辑分离开来.
             XMLConfigBuilder parser = new XMLConfigBuilder(reader, environment, properties);
             //调用 parser.parse方法返回 Configuration 配置对象.
@@ -90,11 +92,18 @@ public class SqlSessionFactoryBuilder {
 
     /**
      * 真正构建 SqlSessionFactory 实现类的方法
+     *
      * @param config
      * @return
      */
     public SqlSessionFactory build(Configuration config) {
         //根据 config 对象创建 SqlSessionFactory
+        //下面是构建 SqlSessionFactory 的核心方法
+        //构造方法传入 全局配置对象 config
+        // DefaultSqlSessionFactory 对象创建完成之后 MyBatis 的初始化工作就已经完成了.
+        // 也就是说 MyBatis 初始化的主要工作就是下面两步
+        // 第一 创建全局配置对象,其中涉及到各种组件的初始化工作.
+        // 第二 创建 DefaultSqlSessionFactory 对象
         return new DefaultSqlSessionFactory(config);
     }
 

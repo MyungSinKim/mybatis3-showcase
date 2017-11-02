@@ -95,7 +95,7 @@ public class XMLConfigBuilder extends BaseBuilder {
     }
 
     /**
-     * 调用 解析方法,解析xml文件返回 Configuration对象 \
+     * 调用 解析方法,解析xml文件返回 Configuration对象
      *
      * @return
      */
@@ -108,6 +108,7 @@ public class XMLConfigBuilder extends BaseBuilder {
         //设置为已经解析过配置
         parsed = true;
         //调用解析方法,解析配置文件中的configuration 节点下的配置
+        //此方法包含了所有的配置初始化流程
         parseConfiguration(parser.evalNode("/configuration"));
 
         //返回解析后的  configuration 对象
@@ -134,11 +135,14 @@ public class XMLConfigBuilder extends BaseBuilder {
             //TODO 临时注释 涉及到插件模块
             //解析插件模块
             //pluginElement(root.evalNode("plugins"));
+
+
             //解析 objectFactory 配置自定义的对象工厂.
             objectFactoryElement(root.evalNode("objectFactory"));
 
             //解析 objectWrapperFactory 配置自定义的.
             objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
+
             //解析 reflectorFactory 如果有自定义则替换默认的反射工厂
             reflectorFactoryElement(root.evalNode("reflectorFactory"));
 
@@ -161,6 +165,8 @@ public class XMLConfigBuilder extends BaseBuilder {
 
     /**
      * xml 中读取配置数据,转换为 Properties
+     * 读取 settings 标签的配置数据.
+     * 配置官方文档地址:http://www.mybatis.org/mybatis-3/zh/configuration.html#settings
      *
      * @param context
      * @return
@@ -176,6 +182,7 @@ public class XMLConfigBuilder extends BaseBuilder {
         //这里获取到 Configuration 类的 MetaClass 信息
         MetaClass metaConfig = MetaClass.forClass(Configuration.class, localReflectorFactory);
         //检测 key 指定的属性 在 configuration 中有没有对应的 set 方法.
+        // settings 中的配置是 会设置给(configuration)的因此必须判断有set方法
         for (Object key : props.keySet()) {
             if (!metaConfig.hasSetter(String.valueOf(key))) {
                 throw new BuilderException("The setting " + key + " is not known.  Make sure you spelled it correctly (case sensitive).");
@@ -211,6 +218,10 @@ public class XMLConfigBuilder extends BaseBuilder {
 
     /**
      * 解析别名配置
+     * 参考官方文档:http://www.mybatis.org/mybatis-3/zh/configuration.html#typeAliases
+     * 别名配置是支持两种方式
+     * 第一 通过typeAlias标签一个一个配置
+     * 第二 通过package 配置一个包名,会自动注册包中所有的类
      *
      * @param parent
      */
@@ -258,12 +269,27 @@ public class XMLConfigBuilder extends BaseBuilder {
 //    }
 //  }
 
+    /**
+     * 配置文件中的 objectFactory 标签用来指定一个 objectFactory对象实现会覆盖默认的实现
+     * 在标签内部也可以设置一些参数传给自定义的 objectFactory实现
+     * 默认的对象工厂需要做的仅仅是实例化目标类，要么通过默认构造方法，要么在参数映射存在的时候通过参数构造方法来实例化.
+     * 参考官方文档:http://www.mybatis.org/mybatis-3/zh/configuration.html#objectFactory
+     *
+     * @param context
+     * @throws Exception
+     */
     private void objectFactoryElement(XNode context) throws Exception {
         if (context != null) {
+            //获取自定义的 objectFactory
             String type = context.getStringAttribute("type");
+            //获取自定义对象工厂配置
             Properties properties = context.getChildrenAsProperties();
+
+            //加载type指向的类并且创建实例
             ObjectFactory factory = (ObjectFactory) resolveClass(type).newInstance();
+            //设置配置
             factory.setProperties(properties);
+            //将对象工厂设置给 全局配置对象
             configuration.setObjectFactory(factory);
         }
     }
@@ -284,9 +310,20 @@ public class XMLConfigBuilder extends BaseBuilder {
         }
     }
 
+    /**
+     * 此方法的作用是用于解析 xml配置中 properties 元素的配置
+     * 此元素配置的作用参考如下官方文档
+     * http://www.mybatis.org/mybatis-3/zh/configuration.html#properties
+     * 此配置的主要作用就是 通过将XML中的配置值抽取到专门的properties文件中,这个文件的位置可以再本地的一个资源
+     * 或者是一个网络上的资源
+     *
+     * @param context
+     * @throws Exception
+     */
     private void propertiesElement(XNode context) throws Exception {
         if (context != null) {
             //解析传入元素中的 name和value 属性,并且设置到 properties 对象中.
+            //properties 标签 内部也可已配置一些设置,具体参考上面文档链接中对此有解释
             Properties defaults = context.getChildrenAsProperties();
             //解析 resource 和 url 确定配置文件的位置
             String resource = context.getStringAttribute("resource");
@@ -298,9 +335,10 @@ public class XMLConfigBuilder extends BaseBuilder {
             }
             if (resource != null) {
                 //如果 配置了 resource 则加载所有配置
+                //使用 resource 字段指定的是一个本地的 properties 资源
                 defaults.putAll(Resources.getResourceAsProperties(resource));
             } else if (url != null) {
-                //如果 配置了 url 则根据 url 加载配置
+                //如果 配置了 url 则根据 url 加载配置,加载远程配置资源的.
                 defaults.putAll(Resources.getUrlAsProperties(url));
             }
             Properties vars = configuration.getVariables();
@@ -309,11 +347,20 @@ public class XMLConfigBuilder extends BaseBuilder {
                 defaults.putAll(vars);
             }
             //更新 XpathParser 和 Configuration 中的配置数据
+            //这里defaults的数据在解析 XML文档中的通过占位符(${xxx})配置的值
             parser.setVariables(defaults);
+            //将配置设置到 全局配置对象(configuration)中去
+            //TODO 这里我有个疑问,XML中的配置什么怎么处理,也就是 XML中配置了但是 properties文件中没有配置的属性
             configuration.setVariables(defaults);
         }
     }
 
+    /**
+     * 此方法将在配置文件中解析到的配置数据,设置到 全局配置对象(configuration)中.
+     *
+     * @param props
+     * @throws Exception
+     */
     private void settingsElement(Properties props) throws Exception {
         //TODO 此配置需要写代码验证
         //结果集映射配置, 默认配置为 PARTIAL.
@@ -474,6 +521,12 @@ public class XMLConfigBuilder extends BaseBuilder {
         throw new BuilderException("Environment declaration requires a DataSourceFactory.");
     }
 
+    /**
+     * 从配置中读取类型转换器信息,完成类型转换器初始化.
+     *
+     * @param parent
+     * @throws Exception
+     */
     private void typeHandlerElement(XNode parent) throws Exception {
         if (parent != null) {
             for (XNode child : parent.getChildren()) {

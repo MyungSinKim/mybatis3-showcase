@@ -1,6 +1,7 @@
 
 package com.ly.zmn48644.mybatis.session;
 
+import com.ly.zmn48644.mybatis.binding.MapperRegistry;
 import com.ly.zmn48644.mybatis.io.VFS;
 import com.ly.zmn48644.mybatis.logging.Log;
 import com.ly.zmn48644.mybatis.mapping.Environment;
@@ -106,6 +107,20 @@ public class Configuration {
 
     //对象包装器工厂
     protected ObjectWrapperFactory objectWrapperFactory = new DefaultObjectWrapperFactory();
+
+
+    //初始化 Mapper 注册中心
+    protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
+
+    /**
+     * @param type
+     * @param sqlSession
+     * @param <T>
+     * @return
+     */
+    public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
+        return mapperRegistry.getMapper(type, sqlSession);
+    }
 
     /**
      * 设置默认枚举类型处理器
