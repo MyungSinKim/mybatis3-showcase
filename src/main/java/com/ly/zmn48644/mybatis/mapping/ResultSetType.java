@@ -3,7 +3,6 @@ package com.ly.zmn48644.mybatis.mapping;
 
 import java.sql.ResultSet;
 
-
 public enum ResultSetType {
     FORWARD_ONLY(ResultSet.TYPE_FORWARD_ONLY),
     SCROLL_INSENSITIVE(ResultSet.TYPE_SCROLL_INSENSITIVE),

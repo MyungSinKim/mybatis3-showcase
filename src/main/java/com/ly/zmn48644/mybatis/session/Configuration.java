@@ -2,6 +2,8 @@
 package com.ly.zmn48644.mybatis.session;
 
 import com.ly.zmn48644.mybatis.binding.MapperRegistry;
+import com.ly.zmn48644.mybatis.builder.CacheRefResolver;
+import com.ly.zmn48644.mybatis.cache.Cache;
 import com.ly.zmn48644.mybatis.io.VFS;
 import com.ly.zmn48644.mybatis.logging.Log;
 import com.ly.zmn48644.mybatis.mapping.Environment;
@@ -27,7 +29,18 @@ public class Configuration {
     //TODO 未完成 Configuration
 
 
+    protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<CacheRefResolver>();
+    /*
+ * A map holds cache-ref relationship. The key is the namespace that
+ * references a cache bound to another namespace and the value is the
+ * namespace which the actual cache is bound to.
+ */
+    protected final Map<String, String> cacheRefMap = new HashMap<String, String>();
+
     protected final Set<String> loadedResources = new HashSet<String>();
+
+
+    protected final Map<String, Cache> caches = new StrictMap<Cache>("Caches collection");
 
     /**
      * 用于存储可复用的SQL片段
@@ -123,8 +136,37 @@ public class Configuration {
         return sqlFragments;
     }
 
+    public void addCache(Cache cache) {
+        caches.put(cache.getId(), cache);
+    }
+
+    public Collection<String> getCacheNames() {
+        return caches.keySet();
+    }
+
+    public Collection<Cache> getCaches() {
+        return caches.values();
+    }
+
+    public Cache getCache(String id) {
+        return caches.get(id);
+    }
+
+    public boolean hasCache(String id) {
+        return caches.containsKey(id);
+    }
+
+    public void addCacheRef(String namespace, String referencedNamespace) {
+        cacheRefMap.put(namespace, referencedNamespace);
+    }
+
+    public void addIncompleteCacheRef(CacheRefResolver incompleteCacheRef) {
+        incompleteCacheRefs.add(incompleteCacheRef);
+    }
+
     /**
      * 添加一个已经加载的资源到loadedResources
+     *
      * @param resource
      */
     public void addLoadedResource(String resource) {
@@ -133,6 +175,7 @@ public class Configuration {
 
     /**
      * 判断资源是否已经加载
+     *
      * @param resource
      * @return
      */
