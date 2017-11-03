@@ -4,6 +4,7 @@ package com.ly.zmn48644.mybatis.builder.xml;
 
 import com.ly.zmn48644.mybatis.builder.BaseBuilder;
 import com.ly.zmn48644.mybatis.builder.BuilderException;
+import com.ly.zmn48644.mybatis.builder.XMLMapperBuilder;
 import com.ly.zmn48644.mybatis.datasource.DataSourceFactory;
 import com.ly.zmn48644.mybatis.executor.ErrorContext;
 import com.ly.zmn48644.mybatis.io.Resources;
@@ -560,7 +561,9 @@ public class XMLConfigBuilder extends BaseBuilder {
      * MyBatis提供了四种配置映射器的方式
      * 第一 使用 resource 配置相对路径的XML
      * 第二 使用 url 配置指定路径下的XML
-     * 第三
+     * 第三 使用 class 指定一个接口
+     * 第四 使用 package 指定一个包,会注册包下所有的接口
+     *
      * @param parent
      * @throws Exception
      */
@@ -570,28 +573,38 @@ public class XMLConfigBuilder extends BaseBuilder {
                 //如果配置文件中指定了 package 则获取包名
                 if ("package".equals(child.getName())) {
                     String mapperPackage = child.getStringAttribute("name");
-                    //TODO 注释
+                    //TODO 注释 使用 package 指定一个包,注册包下所有的接口
                     configuration.addMappers(mapperPackage);
                 } else {
                     String resource = child.getStringAttribute("resource");
                     String url = child.getStringAttribute("url");
                     String mapperClass = child.getStringAttribute("class");
+
+                    // 判断是否是指定 resource 属性
                     if (resource != null && url == null && mapperClass == null) {
+                        //TODO 暂时还不了解
                         ErrorContext.instance().resource(resource);
+
                         InputStream inputStream = Resources.getResourceAsStream(resource);
-                        //TODO 注释
-//            XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, resource, configuration.getSqlFragments());
-//            mapperParser.parse();
+                        //加载本地相对路径XML文件 用于注册映射器
+                        XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, resource, configuration.getSqlFragments());
+                        //parse 方法是解析xml的核心方法,最终目的就是讲解析结果添加到 configuration 中去.
+                        //解析流程就在parse方法中.
+                        mapperParser.parse();
                     } else if (resource == null && url != null && mapperClass == null) {
+                        //TODO 暂时还不了解
                         ErrorContext.instance().resource(url);
+
                         InputStream inputStream = Resources.getUrlAsStream(url);
-                        //TODO 注释
-//            XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, url, configuration.getSqlFragments());
-//            mapperParser.parse();
+                        //加载资源限定符指定的XML文件 用于注册映射器
+                        //和上面一个判断里面的作用是一样的只是换了一种资源加载的方式而已
+                        XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, url, configuration.getSqlFragments());
+                        mapperParser.parse();
                     } else if (resource == null && url == null && mapperClass != null) {
+                        //如果
                         Class<?> mapperInterface = Resources.classForName(mapperClass);
-                        //TODO 注释
-                        //configuration.addMapper(mapperInterface);
+                        //使用 class 指定一个接口,将此接口注册为一个映射器
+                        configuration.addMapper(mapperInterface);
                     } else {
                         throw new BuilderException("A mapper element may only specify a url, resource or class, but not more than one.");
                     }

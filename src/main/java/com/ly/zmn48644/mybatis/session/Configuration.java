@@ -5,6 +5,7 @@ import com.ly.zmn48644.mybatis.binding.MapperRegistry;
 import com.ly.zmn48644.mybatis.io.VFS;
 import com.ly.zmn48644.mybatis.logging.Log;
 import com.ly.zmn48644.mybatis.mapping.Environment;
+import com.ly.zmn48644.mybatis.parsing.XNode;
 import com.ly.zmn48644.mybatis.reflection.DefaultReflectorFactory;
 import com.ly.zmn48644.mybatis.reflection.MetaObject;
 import com.ly.zmn48644.mybatis.reflection.ReflectorFactory;
@@ -17,10 +18,7 @@ import com.ly.zmn48644.mybatis.type.TypeAliasRegistry;
 import com.ly.zmn48644.mybatis.type.TypeHandler;
 import com.ly.zmn48644.mybatis.type.TypeHandlerRegistry;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 全局配置对象
@@ -28,6 +26,14 @@ import java.util.Set;
 public class Configuration {
     //TODO 未完成 Configuration
 
+
+    protected final Set<String> loadedResources = new HashSet<String>();
+
+    /**
+     * 用于存储可复用的SQL片段
+     */
+    //TODO 这块还是有些疑问,暂时不深入.
+    protected final Map<String, XNode> sqlFragments = new StrictMap<XNode>("XML fragments parsed from previous mappers");
 
     public MetaObject newMetaObject(Object object) {
         return MetaObject.forObject(object, objectFactory, objectWrapperFactory, reflectorFactory);
@@ -113,8 +119,45 @@ public class Configuration {
     protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
 
 
+    public Map<String, XNode> getSqlFragments() {
+        return sqlFragments;
+    }
+
+    /**
+     * 添加一个已经加载的资源到loadedResources
+     * @param resource
+     */
+    public void addLoadedResource(String resource) {
+        loadedResources.add(resource);
+    }
+
+    /**
+     * 判断资源是否已经加载
+     * @param resource
+     * @return
+     */
+    public boolean isResourceLoaded(String resource) {
+        return loadedResources.contains(resource);
+    }
+
+
+    /**
+     * 将一个指定包下的接口全部注册到映射器注册中心
+     *
+     * @param packageName
+     */
     public void addMappers(String packageName) {
         mapperRegistry.addMappers(packageName);
+    }
+
+    /**
+     * 添加一个指定接口到注册器中心
+     *
+     * @param type
+     * @param <T>
+     */
+    public <T> void addMapper(Class<T> type) {
+        mapperRegistry.addMapper(type);
     }
 
     /**
@@ -371,5 +414,82 @@ public class Configuration {
 
     public void setEnvironment(Environment environment) {
         this.environment = environment;
+    }
+
+
+    /**
+     * 静态内部类
+     *
+     * @param <V>
+     */
+    protected static class StrictMap<V> extends HashMap<String, V> {
+
+        private static final long serialVersionUID = -4950446264854982944L;
+        private final String name;
+
+        public StrictMap(String name, int initialCapacity, float loadFactor) {
+            super(initialCapacity, loadFactor);
+            this.name = name;
+        }
+
+        public StrictMap(String name, int initialCapacity) {
+            super(initialCapacity);
+            this.name = name;
+        }
+
+        public StrictMap(String name) {
+            super();
+            this.name = name;
+        }
+
+        public StrictMap(String name, Map<String, ? extends V> m) {
+            super(m);
+            this.name = name;
+        }
+
+        @SuppressWarnings("unchecked")
+        public V put(String key, V value) {
+            if (containsKey(key)) {
+                throw new IllegalArgumentException(name + " already contains value for " + key);
+            }
+            if (key.contains(".")) {
+                final String shortKey = getShortName(key);
+                if (super.get(shortKey) == null) {
+                    super.put(shortKey, value);
+                } else {
+                    super.put(shortKey, (V) new Ambiguity(shortKey));
+                }
+            }
+            return super.put(key, value);
+        }
+
+        public V get(Object key) {
+            V value = super.get(key);
+            if (value == null) {
+                throw new IllegalArgumentException(name + " does not contain value for " + key);
+            }
+            if (value instanceof Ambiguity) {
+                throw new IllegalArgumentException(((Ambiguity) value).getSubject() + " is ambiguous in " + name
+                        + " (try using the full name including the namespace, or rename one of the entries)");
+            }
+            return value;
+        }
+
+        private String getShortName(String key) {
+            final String[] keyParts = key.split("\\.");
+            return keyParts[keyParts.length - 1];
+        }
+
+        protected static class Ambiguity {
+            final private String subject;
+
+            public Ambiguity(String subject) {
+                this.subject = subject;
+            }
+
+            public String getSubject() {
+                return subject;
+            }
+        }
     }
 }
