@@ -12,6 +12,12 @@ import java.util.Map;
  * 此接口定义了MyBatis的核心功能
  * 此接口的实现类是 DefaultSqlSession
  * 此接口是从业务层面分析的入口
+ *
+ * 提供了两种执行SQL语句的方式
+ * 第一种 通过namespace+statementId标识,比如  selectOne,selectList等方法
+ * 第二种 通过获取mapper接口的方式,这种方式是比较推荐的
+ *
+ *
  */
 public interface SqlSession extends Closeable {
 

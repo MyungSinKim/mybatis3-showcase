@@ -1,6 +1,7 @@
 
 package com.ly.zmn48644.mybatis.binding;
 
+import com.ly.zmn48644.mybatis.builder.annotation.MapperAnnotationBuilder;
 import com.ly.zmn48644.mybatis.io.ResolverUtil;
 import com.ly.zmn48644.mybatis.session.Configuration;
 import com.ly.zmn48644.mybatis.session.SqlSession;
@@ -50,28 +51,47 @@ public class MapperRegistry {
         }
     }
 
+
+    /**
+     * 判断是否已经注册
+     *
+     * @param type
+     * @param <T>
+     * @return
+     */
     public <T> boolean hasMapper(Class<T> type) {
         return knownMappers.containsKey(type);
     }
 
-
+    /**
+     * 向映射器注册中心添加新的映射器
+     * 向knownMappers中添加一个键值对,key是接口类型就是type,value是MapperProxyFactory(映射器代理对象工厂)
+     *
+     * @param type
+     * @param <T>
+     */
     public <T> void addMapper(Class<T> type) {
+        //type必须是一个接口类型
         if (type.isInterface()) {
+            //判断是否是重复的注册
             if (hasMapper(type)) {
                 throw new BindingException("Type " + type + " is already known to the MapperRegistry.");
             }
+            //添加完成标记,初始化为false
             boolean loadCompleted = false;
             try {
                 knownMappers.put(type, new MapperProxyFactory<T>(type));
                 // It's important that the type is added before the parser is run
                 // otherwise the binding may automatically be attempted by the
                 // mapper parser. If the type is already known, it won't try.
-                //TODO 临时注释
-//        MapperAnnotationBuilder parser = new MapperAnnotationBuilder(config, type);
-//        parser.parse();
+                MapperAnnotationBuilder parser = new MapperAnnotationBuilder(config, type);
+                parser.parse();
+                //添加完成设置为true
                 loadCompleted = true;
             } finally {
+                //如果上面的执行过程中报错,loadCompleted就为false
                 if (!loadCompleted) {
+                    //移除knownMappers中添加的
                     knownMappers.remove(type);
                 }
             }

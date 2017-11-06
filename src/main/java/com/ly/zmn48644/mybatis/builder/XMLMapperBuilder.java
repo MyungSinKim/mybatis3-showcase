@@ -2,12 +2,15 @@ package com.ly.zmn48644.mybatis.builder;
 
 import com.ly.zmn48644.mybatis.builder.xml.XMLMapperEntityResolver;
 import com.ly.zmn48644.mybatis.cache.Cache;
+import com.ly.zmn48644.mybatis.io.Resources;
 import com.ly.zmn48644.mybatis.parsing.XNode;
 import com.ly.zmn48644.mybatis.parsing.XPathParser;
 import com.ly.zmn48644.mybatis.session.Configuration;
 
 import java.io.InputStream;
 import java.io.Reader;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
@@ -31,6 +34,16 @@ public class XMLMapperBuilder extends BaseBuilder {
                 configuration, resource, sqlFragments);
     }
 
+    /**
+     * 此构造方法 在 MapperAnnotationBuilder.loadXmlResource 方法中调用
+     * 解析完接口中的注解后,去读取接口对应的XML文件.mybatis支持注解和xml两种方式配置sql,并且允许这两种形式同时存在.
+     *
+     * @param inputStream
+     * @param configuration
+     * @param resource
+     * @param sqlFragments
+     * @param namespace
+     */
     public XMLMapperBuilder(InputStream inputStream, Configuration configuration, String resource, Map<String, XNode> sqlFragments, String namespace) {
         this(inputStream, configuration, resource, sqlFragments);
         this.builderAssistant.setCurrentNamespace(namespace);
@@ -65,7 +78,32 @@ public class XMLMapperBuilder extends BaseBuilder {
         parsePendingStatements();
     }
 
+    /**
+     * 根据命名空间绑定mapper
+     */
     private void bindMapperForNamespace() {
+        String namespace = builderAssistant.getCurrentNamespace();
+        if (namespace != null) {
+            Class<?> boundType = null;
+            try {
+                boundType = Resources.classForName(namespace);
+            } catch (ClassNotFoundException e) {
+                //ignore, bound type is not required
+            }
+            if (boundType != null) {
+                //判断是否绑定过
+                if (!configuration.hasMapper(boundType)) {
+                    // Spring may not know the real resource name so we set a flag
+                    // to prevent loading again this resource from the mapper interface
+                    // look at MapperAnnotationBuilder#loadXmlResource
+
+                    //namespace 添加到 configuration中的loadedResources集合中
+                    configuration.addLoadedResource("namespace:" + namespace);
+                    //将 namespace 所指向的接口 加入到 configuration中 mapperRegistry(映射器注册中心) 的knownMappers集合中去.
+                    configuration.addMapper(boundType);
+                }
+            }
+        }
     }
 
     private void parsePendingCacheRefs() {
@@ -76,8 +114,8 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
 
     private void parsePendingResultMaps() {
-    }
 
+    }
 
     private void configurationElement(XNode context) {
         try {

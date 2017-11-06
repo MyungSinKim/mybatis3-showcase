@@ -3,6 +3,7 @@ package com.ly.zmn48644.mybatis.session;
 
 import com.ly.zmn48644.mybatis.binding.MapperRegistry;
 import com.ly.zmn48644.mybatis.builder.CacheRefResolver;
+import com.ly.zmn48644.mybatis.builder.annotation.MethodResolver;
 import com.ly.zmn48644.mybatis.cache.Cache;
 import com.ly.zmn48644.mybatis.io.VFS;
 import com.ly.zmn48644.mybatis.logging.Log;
@@ -28,13 +29,10 @@ import java.util.*;
 public class Configuration {
     //TODO 未完成 Configuration
 
+    protected final Collection<MethodResolver> incompleteMethods = new LinkedList<MethodResolver>();
 
     protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<CacheRefResolver>();
-    /*
- * A map holds cache-ref relationship. The key is the namespace that
- * references a cache bound to another namespace and the value is the
- * namespace which the actual cache is bound to.
- */
+
     protected final Map<String, String> cacheRefMap = new HashMap<String, String>();
 
     protected final Set<String> loadedResources = new HashSet<String>();
@@ -173,6 +171,10 @@ public class Configuration {
         loadedResources.add(resource);
     }
 
+    public void addIncompleteMethod(MethodResolver builder) {
+        incompleteMethods.add(builder);
+    }
+
     /**
      * 判断资源是否已经加载
      *
@@ -211,6 +213,11 @@ public class Configuration {
      */
     public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
         return mapperRegistry.getMapper(type, sqlSession);
+    }
+
+
+    public boolean hasMapper(Class<?> type) {
+        return mapperRegistry.hasMapper(type);
     }
 
     /**
