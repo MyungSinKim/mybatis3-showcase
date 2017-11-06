@@ -65,11 +65,20 @@ public class XMLMapperBuilder extends BaseBuilder {
         parsePendingStatements();
     }
 
-    /**
-     * 此方法每个资源只会执行一次
-     *
-     * @param context
-     */
+    private void bindMapperForNamespace() {
+    }
+
+    private void parsePendingCacheRefs() {
+
+    }
+
+    private void parsePendingStatements() {
+    }
+
+    private void parsePendingResultMaps() {
+    }
+
+
     private void configurationElement(XNode context) {
         try {
             String namespace = context.getStringAttribute("namespace");
@@ -119,17 +128,5 @@ public class XMLMapperBuilder extends BaseBuilder {
         }
     }
 
-    private void bindMapperForNamespace() {
-    }
-
-    private void parsePendingCacheRefs() {
-
-    }
-
-    private void parsePendingStatements() {
-    }
-
-    private void parsePendingResultMaps() {
-    }
 
 }
