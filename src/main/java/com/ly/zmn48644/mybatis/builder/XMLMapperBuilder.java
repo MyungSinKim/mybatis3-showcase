@@ -1,6 +1,7 @@
 package com.ly.zmn48644.mybatis.builder;
 
 import com.ly.zmn48644.mybatis.builder.xml.XMLMapperEntityResolver;
+import com.ly.zmn48644.mybatis.builder.xml.XMLStatementBuilder;
 import com.ly.zmn48644.mybatis.cache.Cache;
 import com.ly.zmn48644.mybatis.io.Resources;
 import com.ly.zmn48644.mybatis.parsing.XNode;
@@ -71,6 +72,7 @@ public class XMLMapperBuilder extends BaseBuilder {
             //解析 mapper 标签
             configurationElement(parser.evalNode("/mapper"));
             configuration.addLoadedResource(resource);
+            //注册 mapper
             bindMapperForNamespace();
         }
         parsePendingResultMaps();
@@ -79,7 +81,7 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
 
     /**
-     * 根据命名空间绑定mapper
+     * 注册mapper
      */
     private void bindMapperForNamespace() {
         String namespace = builderAssistant.getCurrentNamespace();
@@ -106,15 +108,68 @@ public class XMLMapperBuilder extends BaseBuilder {
         }
     }
 
+
+    /**
+     * 处理configurationElement方法中解析失败的<cache-ref>节点
+     * 在解析时是按照上到下顺序解析的,因此会出现 在解析一个节点时 引用了在 之后定义的节点
+     * 这样就造成了解析此节点的失败抛出异常,可以称之为未完成解析,程序的处理逻辑是将其暂存在集合中
+     * 最后在处理这些未完成的节点解析.
+     */
     private void parsePendingCacheRefs() {
-
+        /**
+         *  获取未完成节点结合
+         *  CacheRefResolver 是一个封装类
+         */
+        Collection<CacheRefResolver> incompleteCacheRefs = configuration.getIncompleteCacheRefs();
+        synchronized (incompleteCacheRefs) {
+            Iterator<CacheRefResolver> iter = incompleteCacheRefs.iterator();
+            while (iter.hasNext()) {
+                try {
+                    //重新调用 useCacheRef 方法解析
+                    iter.next().resolveCacheRef();
+                    iter.remove();
+                } catch (IncompleteElementException e) {
+                    // Cache ref is still missing a resource...
+                    //这里不做处理
+                }
+            }
+        }
     }
 
+    /**
+     * 处理configurationElement方法中解析失败的 SQL 语句节点
+     */
     private void parsePendingStatements() {
+        Collection<XMLStatementBuilder> incompleteStatements = configuration.getIncompleteStatements();
+        synchronized (incompleteStatements) {
+            Iterator<XMLStatementBuilder> iter = incompleteStatements.iterator();
+            while (iter.hasNext()) {
+                try {
+                    iter.next().parseStatementNode();
+                    iter.remove();
+                } catch (IncompleteElementException e) {
+                    // Statement is still missing a resource...
+                }
+            }
+        }
     }
 
+    /**
+     * 处理configurationElement方法中解析失败的<resultMap>节点
+     */
     private void parsePendingResultMaps() {
-
+        Collection<ResultMapResolver> incompleteResultMaps = configuration.getIncompleteResultMaps();
+        synchronized (incompleteResultMaps) {
+            Iterator<ResultMapResolver> iter = incompleteResultMaps.iterator();
+            while (iter.hasNext()) {
+                try {
+                    iter.next().resolve();
+                    iter.remove();
+                } catch (IncompleteElementException e) {
+                    // ResultMap is still missing a resource...
+                }
+            }
+        }
     }
 
     private void configurationElement(XNode context) {
@@ -125,6 +180,7 @@ public class XMLMapperBuilder extends BaseBuilder {
             }
 
             builderAssistant.setCurrentNamespace(namespace);
+
             cacheRefElement(context.evalNode("cache-ref"));
 
             cacheElement(context.evalNode("cache"));

@@ -3,11 +3,14 @@ package com.ly.zmn48644.mybatis.session;
 
 import com.ly.zmn48644.mybatis.binding.MapperRegistry;
 import com.ly.zmn48644.mybatis.builder.CacheRefResolver;
+import com.ly.zmn48644.mybatis.builder.ResultMapResolver;
 import com.ly.zmn48644.mybatis.builder.annotation.MethodResolver;
+import com.ly.zmn48644.mybatis.builder.xml.XMLStatementBuilder;
 import com.ly.zmn48644.mybatis.cache.Cache;
 import com.ly.zmn48644.mybatis.io.VFS;
 import com.ly.zmn48644.mybatis.logging.Log;
 import com.ly.zmn48644.mybatis.mapping.Environment;
+import com.ly.zmn48644.mybatis.mapping.ResultMap;
 import com.ly.zmn48644.mybatis.parsing.XNode;
 import com.ly.zmn48644.mybatis.reflection.DefaultReflectorFactory;
 import com.ly.zmn48644.mybatis.reflection.MetaObject;
@@ -29,15 +32,12 @@ import java.util.*;
 public class Configuration {
     //TODO 未完成 Configuration
 
-    protected final Collection<MethodResolver> incompleteMethods = new LinkedList<MethodResolver>();
-
-    protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<CacheRefResolver>();
 
     protected final Map<String, String> cacheRefMap = new HashMap<String, String>();
 
     protected final Set<String> loadedResources = new HashSet<String>();
 
-
+    protected final Map<String, ResultMap> resultMaps = new StrictMap<ResultMap>("Result Maps collection");
     protected final Map<String, Cache> caches = new StrictMap<Cache>("Caches collection");
 
     /**
@@ -129,6 +129,10 @@ public class Configuration {
     //初始化 Mapper 注册中心
     protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
 
+    protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<XMLStatementBuilder>();
+    protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<CacheRefResolver>();
+    protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<ResultMapResolver>();
+    protected final Collection<MethodResolver> incompleteMethods = new LinkedList<MethodResolver>();
 
     public Map<String, XNode> getSqlFragments() {
         return sqlFragments;
@@ -160,6 +164,28 @@ public class Configuration {
 
     public void addIncompleteCacheRef(CacheRefResolver incompleteCacheRef) {
         incompleteCacheRefs.add(incompleteCacheRef);
+    }
+
+    public void addResultMap(ResultMap rm) {
+        resultMaps.put(rm.getId(), rm);
+        checkLocallyForDiscriminatedNestedResultMaps(rm);
+        checkGloballyForDiscriminatedNestedResultMaps(rm);
+    }
+
+    public Collection<String> getResultMapNames() {
+        return resultMaps.keySet();
+    }
+
+    public Collection<ResultMap> getResultMaps() {
+        return resultMaps.values();
+    }
+
+    public ResultMap getResultMap(String id) {
+        return resultMaps.get(id);
+    }
+
+    public boolean hasResultMap(String id) {
+        return resultMaps.containsKey(id);
     }
 
     /**
@@ -229,6 +255,25 @@ public class Configuration {
         if (typeHandler != null) {
             getTypeHandlerRegistry().setDefaultEnumTypeHandler(typeHandler);
         }
+    }
+
+    public Collection<CacheRefResolver> getIncompleteCacheRefs() {
+        return incompleteCacheRefs;
+    }
+
+    public Collection<ResultMapResolver> getIncompleteResultMaps() {
+        return incompleteResultMaps;
+    }
+
+    public void addIncompleteResultMap(ResultMapResolver resultMapResolver) {
+        incompleteResultMaps.add(resultMapResolver);
+    }
+    public Collection<XMLStatementBuilder> getIncompleteStatements() {
+        return incompleteStatements;
+    }
+
+    public Collection<MethodResolver> getIncompleteMethods() {
+        return incompleteMethods;
     }
 
     public boolean isCallSettersOnNulls() {
@@ -539,6 +584,40 @@ public class Configuration {
 
             public String getSubject() {
                 return subject;
+            }
+        }
+    }
+
+    // Slow but a one time cost. A better solution is welcome.
+    protected void checkGloballyForDiscriminatedNestedResultMaps(ResultMap rm) {
+        if (rm.hasNestedResultMaps()) {
+            for (Map.Entry<String, ResultMap> entry : resultMaps.entrySet()) {
+                Object value = entry.getValue();
+                if (value instanceof ResultMap) {
+                    ResultMap entryResultMap = (ResultMap) value;
+                    if (!entryResultMap.hasNestedResultMaps() && entryResultMap.getDiscriminator() != null) {
+                        Collection<String> discriminatedResultMapNames = entryResultMap.getDiscriminator().getDiscriminatorMap().values();
+                        if (discriminatedResultMapNames.contains(rm.getId())) {
+                            entryResultMap.forceNestedResultMaps();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Slow but a one time cost. A better solution is welcome.
+    protected void checkLocallyForDiscriminatedNestedResultMaps(ResultMap rm) {
+        if (!rm.hasNestedResultMaps() && rm.getDiscriminator() != null) {
+            for (Map.Entry<String, String> entry : rm.getDiscriminator().getDiscriminatorMap().entrySet()) {
+                String discriminatedResultMapName = entry.getValue();
+                if (hasResultMap(discriminatedResultMapName)) {
+                    ResultMap discriminatedResultMap = resultMaps.get(discriminatedResultMapName);
+                    if (discriminatedResultMap.hasNestedResultMaps()) {
+                        rm.forceNestedResultMaps();
+                        break;
+                    }
+                }
             }
         }
     }

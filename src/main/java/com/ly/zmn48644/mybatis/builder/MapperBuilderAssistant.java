@@ -14,8 +14,12 @@ import com.ly.zmn48644.mybatis.type.TypeHandler;
 
 import java.util.*;
 
+/**
+ * 辅助 XMLMapperBuilder 构建组件
+ *
+ */
 public class MapperBuilderAssistant extends BaseBuilder {
-
+    //也就是
     private String currentNamespace;
     private final String resource;
     private Cache currentCache;
@@ -135,47 +139,47 @@ public class MapperBuilderAssistant extends BaseBuilder {
                 .build();
     }
 
-//    public ResultMap addResultMap(
-//            String id,
-//            Class<?> type,
-//            String extend,
-//            Discriminator discriminator,
-//            List<ResultMapping> resultMappings,
-//            Boolean autoMapping) {
-//        id = applyCurrentNamespace(id, false);
-//        extend = applyCurrentNamespace(extend, true);
-//
-//        if (extend != null) {
-//            if (!configuration.hasResultMap(extend)) {
-//                throw new IncompleteElementException("Could not find a parent resultmap with id '" + extend + "'");
-//            }
-//            ResultMap resultMap = configuration.getResultMap(extend);
-//            List<ResultMapping> extendedResultMappings = new ArrayList<ResultMapping>(resultMap.getResultMappings());
-//            extendedResultMappings.removeAll(resultMappings);
-//            // Remove parent constructor if this resultMap declares a constructor.
-//            boolean declaresConstructor = false;
-//            for (ResultMapping resultMapping : resultMappings) {
-//                if (resultMapping.getFlags().contains(ResultFlag.CONSTRUCTOR)) {
-//                    declaresConstructor = true;
-//                    break;
-//                }
-//            }
-//            if (declaresConstructor) {
-//                Iterator<ResultMapping> extendedResultMappingsIter = extendedResultMappings.iterator();
-//                while (extendedResultMappingsIter.hasNext()) {
-//                    if (extendedResultMappingsIter.next().getFlags().contains(ResultFlag.CONSTRUCTOR)) {
-//                        extendedResultMappingsIter.remove();
-//                    }
-//                }
-//            }
-//            resultMappings.addAll(extendedResultMappings);
-//        }
-//        ResultMap resultMap = new ResultMap.Builder(configuration, id, type, resultMappings, autoMapping)
-//                .discriminator(discriminator)
-//                .build();
-//        configuration.addResultMap(resultMap);
-//        return resultMap;
-//    }
+    public ResultMap addResultMap(
+            String id,
+            Class<?> type,
+            String extend,
+            Discriminator discriminator,
+            List<ResultMapping> resultMappings,
+            Boolean autoMapping) {
+        id = applyCurrentNamespace(id, false);
+        extend = applyCurrentNamespace(extend, true);
+
+        if (extend != null) {
+            if (!configuration.hasResultMap(extend)) {
+                throw new IncompleteElementException("Could not find a parent resultmap with id '" + extend + "'");
+            }
+            ResultMap resultMap = configuration.getResultMap(extend);
+            List<ResultMapping> extendedResultMappings = new ArrayList<ResultMapping>(resultMap.getResultMappings());
+            extendedResultMappings.removeAll(resultMappings);
+            // Remove parent constructor if this resultMap declares a constructor.
+            boolean declaresConstructor = false;
+            for (ResultMapping resultMapping : resultMappings) {
+                if (resultMapping.getFlags().contains(ResultFlag.CONSTRUCTOR)) {
+                    declaresConstructor = true;
+                    break;
+                }
+            }
+            if (declaresConstructor) {
+                Iterator<ResultMapping> extendedResultMappingsIter = extendedResultMappings.iterator();
+                while (extendedResultMappingsIter.hasNext()) {
+                    if (extendedResultMappingsIter.next().getFlags().contains(ResultFlag.CONSTRUCTOR)) {
+                        extendedResultMappingsIter.remove();
+                    }
+                }
+            }
+            resultMappings.addAll(extendedResultMappings);
+        }
+        ResultMap resultMap = new ResultMap.Builder(configuration, id, type, resultMappings, autoMapping)
+                .discriminator(discriminator)
+                .build();
+        configuration.addResultMap(resultMap);
+        return resultMap;
+    }
 
     public Discriminator buildDiscriminator(
             Class<?> resultType,
