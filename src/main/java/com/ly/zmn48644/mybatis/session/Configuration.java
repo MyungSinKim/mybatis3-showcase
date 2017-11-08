@@ -7,11 +7,24 @@ import com.ly.zmn48644.mybatis.builder.ResultMapResolver;
 import com.ly.zmn48644.mybatis.builder.annotation.MethodResolver;
 import com.ly.zmn48644.mybatis.builder.xml.XMLStatementBuilder;
 import com.ly.zmn48644.mybatis.cache.Cache;
+import com.ly.zmn48644.mybatis.cache.decorators.FifoCache;
+import com.ly.zmn48644.mybatis.cache.decorators.LruCache;
+import com.ly.zmn48644.mybatis.cache.decorators.SoftCache;
+import com.ly.zmn48644.mybatis.cache.decorators.WeakCache;
+import com.ly.zmn48644.mybatis.cache.impl.PerpetualCache;
+import com.ly.zmn48644.mybatis.datasource.jndi.JndiDataSourceFactory;
+import com.ly.zmn48644.mybatis.datasource.pooled.PooledDataSourceFactory;
+import com.ly.zmn48644.mybatis.datasource.unpooled.UnpooledDataSourceFactory;
 import com.ly.zmn48644.mybatis.io.VFS;
 import com.ly.zmn48644.mybatis.logging.Log;
-import com.ly.zmn48644.mybatis.mapping.Environment;
-import com.ly.zmn48644.mybatis.mapping.ParameterMap;
-import com.ly.zmn48644.mybatis.mapping.ResultMap;
+import com.ly.zmn48644.mybatis.logging.commons.JakartaCommonsLoggingImpl;
+import com.ly.zmn48644.mybatis.logging.jdk14.Jdk14LoggingImpl;
+import com.ly.zmn48644.mybatis.logging.log4j.Log4jImpl;
+import com.ly.zmn48644.mybatis.logging.log4j2.Log4j2Impl;
+import com.ly.zmn48644.mybatis.logging.nologging.NoLoggingImpl;
+import com.ly.zmn48644.mybatis.logging.slf4j.Slf4jImpl;
+import com.ly.zmn48644.mybatis.logging.stdout.StdOutImpl;
+import com.ly.zmn48644.mybatis.mapping.*;
 import com.ly.zmn48644.mybatis.parsing.XNode;
 import com.ly.zmn48644.mybatis.reflection.DefaultReflectorFactory;
 import com.ly.zmn48644.mybatis.reflection.MetaObject;
@@ -20,6 +33,11 @@ import com.ly.zmn48644.mybatis.reflection.factory.DefaultObjectFactory;
 import com.ly.zmn48644.mybatis.reflection.factory.ObjectFactory;
 import com.ly.zmn48644.mybatis.reflection.warpper.DefaultObjectWrapperFactory;
 import com.ly.zmn48644.mybatis.reflection.warpper.ObjectWrapperFactory;
+import com.ly.zmn48644.mybatis.scripting.LanguageDriverRegistry;
+import com.ly.zmn48644.mybatis.scripting.defaults.RawLanguageDriver;
+import com.ly.zmn48644.mybatis.scripting.xmltags.XMLLanguageDriver;
+import com.ly.zmn48644.mybatis.transaction.jdbc.JdbcTransactionFactory;
+import com.ly.zmn48644.mybatis.transaction.managed.ManagedTransactionFactory;
 import com.ly.zmn48644.mybatis.type.JdbcType;
 import com.ly.zmn48644.mybatis.type.TypeAliasRegistry;
 import com.ly.zmn48644.mybatis.type.TypeHandler;
@@ -33,13 +51,58 @@ import java.util.*;
 public class Configuration {
     //TODO 未完成 Configuration
 
+    public Configuration(Environment environment) {
+        this();
+        this.environment = environment;
+    }
+
+    public Configuration() {
+        typeAliasRegistry.registerAlias("JDBC", JdbcTransactionFactory.class);
+        typeAliasRegistry.registerAlias("MANAGED", ManagedTransactionFactory.class);
+
+        typeAliasRegistry.registerAlias("JNDI", JndiDataSourceFactory.class);
+        typeAliasRegistry.registerAlias("POOLED", PooledDataSourceFactory.class);
+        typeAliasRegistry.registerAlias("UNPOOLED", UnpooledDataSourceFactory.class);
+
+        typeAliasRegistry.registerAlias("PERPETUAL", PerpetualCache.class);
+        typeAliasRegistry.registerAlias("FIFO", FifoCache.class);
+        typeAliasRegistry.registerAlias("LRU", LruCache.class);
+        typeAliasRegistry.registerAlias("SOFT", SoftCache.class);
+        typeAliasRegistry.registerAlias("WEAK", WeakCache.class);
+
+        typeAliasRegistry.registerAlias("DB_VENDOR", VendorDatabaseIdProvider.class);
+
+        typeAliasRegistry.registerAlias("XML", XMLLanguageDriver.class);
+        typeAliasRegistry.registerAlias("RAW", RawLanguageDriver.class);
+
+        typeAliasRegistry.registerAlias("SLF4J", Slf4jImpl.class);
+        typeAliasRegistry.registerAlias("COMMONS_LOGGING", JakartaCommonsLoggingImpl.class);
+        typeAliasRegistry.registerAlias("LOG4J", Log4jImpl.class);
+        typeAliasRegistry.registerAlias("LOG4J2", Log4j2Impl.class);
+        typeAliasRegistry.registerAlias("JDK_LOGGING", Jdk14LoggingImpl.class);
+        typeAliasRegistry.registerAlias("STDOUT_LOGGING", StdOutImpl.class);
+        typeAliasRegistry.registerAlias("NO_LOGGING", NoLoggingImpl.class);
+
+        //TODO 临时注释
+        //typeAliasRegistry.registerAlias("CGLIB", CglibProxyFactory.class);
+        //typeAliasRegistry.registerAlias("JAVASSIST", JavassistProxyFactory.class);
+
+        languageRegistry.setDefaultDriverClass(XMLLanguageDriver.class);
+        languageRegistry.register(RawLanguageDriver.class);
+    }
+
+
+    protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
+
+    protected AutoMappingUnknownColumnBehavior autoMappingUnknownColumnBehavior = AutoMappingUnknownColumnBehavior.NONE;
+
     //数据库ID配置
     protected String databaseId;
 
     protected final Map<String, String> cacheRefMap = new HashMap<String, String>();
 
     protected final Set<String> loadedResources = new HashSet<String>();
-
+    protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection");
     //未来可能会别移除
     protected final Map<String, ParameterMap> parameterMaps = new StrictMap<ParameterMap>("Parameter Maps collection");
 
@@ -632,10 +695,34 @@ public class Configuration {
             }
         }
     }
+
     public void addIncompleteStatement(XMLStatementBuilder incompleteStatement) {
         incompleteStatements.add(incompleteStatement);
     }
+
     public String getDatabaseId() {
         return databaseId;
+    }
+
+    public void setDatabaseId(String databaseId) {
+        this.databaseId = databaseId;
+    }
+
+    /**
+     * @since 3.4.0
+     */
+    public void setAutoMappingUnknownColumnBehavior(AutoMappingUnknownColumnBehavior autoMappingUnknownColumnBehavior) {
+        this.autoMappingUnknownColumnBehavior = autoMappingUnknownColumnBehavior;
+    }
+
+    public LanguageDriverRegistry getLanguageRegistry() {
+        return languageRegistry;
+    }
+
+    public ParameterMap getParameterMap(String id) {
+        return parameterMaps.get(id);
+    }
+    public void addMappedStatement(MappedStatement ms) {
+        mappedStatements.put(ms.getId(), ms);
     }
 }

@@ -8,10 +8,12 @@ import com.ly.zmn48644.mybatis.cache.impl.PerpetualCache;
 import com.ly.zmn48644.mybatis.executor.ErrorContext;
 import com.ly.zmn48644.mybatis.mapping.*;
 import com.ly.zmn48644.mybatis.reflection.MetaClass;
+import com.ly.zmn48644.mybatis.scripting.LanguageDriver;
 import com.ly.zmn48644.mybatis.session.Configuration;
 import com.ly.zmn48644.mybatis.type.JdbcType;
 import com.ly.zmn48644.mybatis.type.TypeHandler;
 
+import javax.crypto.KeyGenerator;
 import java.util.*;
 
 /**
@@ -441,44 +443,149 @@ public class MapperBuilderAssistant extends BaseBuilder {
                 nestedResultMap, notNullColumn, columnPrefix, typeHandler, flags, null, null, configuration.isLazyLoadingEnabled());
     }
 
-    //TODO 临时注释
-//    public LanguageDriver getLanguageDriver(Class<?> langClass) {
-//        if (langClass != null) {
-//            configuration.getLanguageRegistry().register(langClass);
-//        } else {
-//            langClass = configuration.getLanguageRegistry().getDefaultDriverClass();
-//        }
-//        return configuration.getLanguageRegistry().getDriver(langClass);
-//    }
+
+    public LanguageDriver getLanguageDriver(Class<?> langClass) {
+        if (langClass != null) {
+            configuration.getLanguageRegistry().register(langClass);
+        } else {
+            langClass = configuration.getLanguageRegistry().getDefaultDriverClass();
+        }
+        return configuration.getLanguageRegistry().getDriver(langClass);
+    }
 
     /**
      * Backward compatibility signature
      */
-//    public MappedStatement addMappedStatement(
-//            String id,
-//            SqlSource sqlSource,
-//            StatementType statementType,
-//            SqlCommandType sqlCommandType,
-//            Integer fetchSize,
-//            Integer timeout,
-//            String parameterMap,
-//            Class<?> parameterType,
-//            String resultMap,
-//            Class<?> resultType,
-//            ResultSetType resultSetType,
-//            boolean flushCache,
-//            boolean useCache,
-//            boolean resultOrdered,
-//            KeyGenerator keyGenerator,
-//            String keyProperty,
-//            String keyColumn,
-//            String databaseId,
-//            LanguageDriver lang) {
-//        return addMappedStatement(
-//                id, sqlSource, statementType, sqlCommandType, fetchSize, timeout,
-//                parameterMap, parameterType, resultMap, resultType, resultSetType,
-//                flushCache, useCache, resultOrdered, keyGenerator, keyProperty,
-//                keyColumn, databaseId, lang, null);
-//    }
+    public MappedStatement addMappedStatement(
+            String id,
+            SqlSource sqlSource,
+            StatementType statementType,
+            SqlCommandType sqlCommandType,
+            Integer fetchSize,
+            Integer timeout,
+            String parameterMap,
+            Class<?> parameterType,
+            String resultMap,
+            Class<?> resultType,
+            ResultSetType resultSetType,
+            boolean flushCache,
+            boolean useCache,
+            boolean resultOrdered,
+            KeyGenerator keyGenerator,
+            String keyProperty,
+            String keyColumn,
+            String databaseId,
+            LanguageDriver lang) {
+        return addMappedStatement(
+                id, sqlSource, statementType, sqlCommandType, fetchSize, timeout,
+                parameterMap, parameterType, resultMap, resultType, resultSetType,
+                flushCache, useCache, resultOrdered, keyGenerator, keyProperty,
+                keyColumn, databaseId, lang, null);
+    }
+    public MappedStatement addMappedStatement(
+            String id,
+            SqlSource sqlSource,
+            StatementType statementType,
+            SqlCommandType sqlCommandType,
+            Integer fetchSize,
+            Integer timeout,
+            String parameterMap,
+            Class<?> parameterType,
+            String resultMap,
+            Class<?> resultType,
+            ResultSetType resultSetType,
+            boolean flushCache,
+            boolean useCache,
+            boolean resultOrdered,
+            KeyGenerator keyGenerator,
+            String keyProperty,
+            String keyColumn,
+            String databaseId,
+            LanguageDriver lang,
+            String resultSets) {
 
+        if (unresolvedCacheRef) {
+            throw new IncompleteElementException("Cache-ref not yet resolved");
+        }
+
+        id = applyCurrentNamespace(id, false);
+        boolean isSelect = sqlCommandType == SqlCommandType.SELECT;
+
+        MappedStatement.Builder statementBuilder = new MappedStatement.Builder(configuration, id, sqlSource, sqlCommandType)
+                .resource(resource)
+                .fetchSize(fetchSize)
+                .timeout(timeout)
+                .statementType(statementType)
+                .keyGenerator(keyGenerator)
+                .keyProperty(keyProperty)
+                .keyColumn(keyColumn)
+                .databaseId(databaseId)
+                .lang(lang)
+                .resultOrdered(resultOrdered)
+                .resultSets(resultSets)
+                .resultMaps(getStatementResultMaps(resultMap, resultType, id))
+                .resultSetType(resultSetType)
+                .flushCacheRequired(valueOrDefault(flushCache, !isSelect))
+                .useCache(valueOrDefault(useCache, isSelect))
+                .cache(currentCache);
+
+        ParameterMap statementParameterMap = getStatementParameterMap(parameterMap, parameterType, id);
+        if (statementParameterMap != null) {
+            statementBuilder.parameterMap(statementParameterMap);
+        }
+
+        MappedStatement statement = statementBuilder.build();
+        configuration.addMappedStatement(statement);
+        return statement;
+    }
+
+    private List<ResultMap> getStatementResultMaps(
+            String resultMap,
+            Class<?> resultType,
+            String statementId) {
+        resultMap = applyCurrentNamespace(resultMap, true);
+
+        List<ResultMap> resultMaps = new ArrayList<ResultMap>();
+        if (resultMap != null) {
+            String[] resultMapNames = resultMap.split(",");
+            for (String resultMapName : resultMapNames) {
+                try {
+                    resultMaps.add(configuration.getResultMap(resultMapName.trim()));
+                } catch (IllegalArgumentException e) {
+                    throw new IncompleteElementException("Could not find result map " + resultMapName, e);
+                }
+            }
+        } else if (resultType != null) {
+            ResultMap inlineResultMap = new ResultMap.Builder(
+                    configuration,
+                    statementId + "-Inline",
+                    resultType,
+                    new ArrayList<ResultMapping>(),
+                    null).build();
+            resultMaps.add(inlineResultMap);
+        }
+        return resultMaps;
+    }
+    private ParameterMap getStatementParameterMap(
+            String parameterMapName,
+            Class<?> parameterTypeClass,
+            String statementId) {
+        parameterMapName = applyCurrentNamespace(parameterMapName, true);
+        ParameterMap parameterMap = null;
+        if (parameterMapName != null) {
+            try {
+                parameterMap = configuration.getParameterMap(parameterMapName);
+            } catch (IllegalArgumentException e) {
+                throw new IncompleteElementException("Could not find parameter map " + parameterMapName, e);
+            }
+        } else if (parameterTypeClass != null) {
+            List<ParameterMapping> parameterMappings = new ArrayList<ParameterMapping>();
+            parameterMap = new ParameterMap.Builder(
+                    configuration,
+                    statementId + "-Inline",
+                    parameterTypeClass,
+                    parameterMappings).build();
+        }
+        return parameterMap;
+    }
 }

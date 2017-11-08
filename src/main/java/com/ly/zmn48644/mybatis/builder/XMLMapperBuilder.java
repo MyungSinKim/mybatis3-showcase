@@ -175,6 +175,13 @@ public class XMLMapperBuilder extends BaseBuilder {
         }
     }
 
+
+    /**
+     * xml解析的核心逻辑
+     * 参考文档 http://www.mybatis.org/mybatis-3/zh/sqlmap-xml.html
+     *
+     * @param context
+     */
     private void configurationElement(XNode context) {
         try {
             String namespace = context.getStringAttribute("namespace");

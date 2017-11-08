@@ -10,6 +10,7 @@ import com.ly.zmn48644.mybatis.executor.ErrorContext;
 import com.ly.zmn48644.mybatis.io.Resources;
 import com.ly.zmn48644.mybatis.io.VFS;
 import com.ly.zmn48644.mybatis.logging.Log;
+import com.ly.zmn48644.mybatis.mapping.DatabaseIdProvider;
 import com.ly.zmn48644.mybatis.mapping.Environment;
 import com.ly.zmn48644.mybatis.parsing.XNode;
 import com.ly.zmn48644.mybatis.parsing.XPathParser;
@@ -18,10 +19,7 @@ import com.ly.zmn48644.mybatis.reflection.MetaClass;
 import com.ly.zmn48644.mybatis.reflection.ReflectorFactory;
 import com.ly.zmn48644.mybatis.reflection.factory.ObjectFactory;
 import com.ly.zmn48644.mybatis.reflection.warpper.ObjectWrapperFactory;
-import com.ly.zmn48644.mybatis.session.AutoMappingBehavior;
-import com.ly.zmn48644.mybatis.session.Configuration;
-import com.ly.zmn48644.mybatis.session.ExecutorType;
-import com.ly.zmn48644.mybatis.session.LocalCacheScope;
+import com.ly.zmn48644.mybatis.session.*;
 import com.ly.zmn48644.mybatis.transaction.TransactionFactory;
 import com.ly.zmn48644.mybatis.type.JdbcType;
 import com.ly.zmn48644.mybatis.type.TypeHandler;
@@ -147,22 +145,48 @@ public class XMLConfigBuilder extends BaseBuilder {
             //解析 reflectorFactory 如果有自定义则替换默认的反射工厂
             reflectorFactoryElement(root.evalNode("reflectorFactory"));
 
+            //解析 启动配置 元素
             settingsElement(settings);
 
             //解析 环境 配置
             environmentsElement(root.evalNode("environments"));
-            //TODO 临时注释
-            //databaseIdProviderElement(root.evalNode("databaseIdProvider"));
+            //解析 databaseIdProvider 配置
+            databaseIdProviderElement(root.evalNode("databaseIdProvider"));
 
             //解析自定义的类型处理器.
             typeHandlerElement(root.evalNode("typeHandlers"));
-            //TODO 临时注释
+            //解析 mapper.xml 文件
             mapperElement(root.evalNode("mappers"));
         } catch (Exception e) {
             throw new BuilderException("Error parsing SQL Mapper Configuration. Cause: " + e, e);
         }
     }
 
+    /**
+     * 解析 databaseIdProvider 配置
+     *
+     * @param context
+     * @throws Exception
+     */
+    private void databaseIdProviderElement(XNode context) throws Exception {
+        DatabaseIdProvider databaseIdProvider = null;
+        if (context != null) {
+            String type = context.getStringAttribute("type");
+            // awful patch to keep backward compatibility
+            if ("VENDOR".equals(type)) {
+                type = "DB_VENDOR";
+            }
+            Properties properties = context.getChildrenAsProperties();
+            databaseIdProvider = (DatabaseIdProvider) resolveClass(type).newInstance();
+            databaseIdProvider.setProperties(properties);
+        }
+        Environment environment = configuration.getEnvironment();
+        if (environment != null && databaseIdProvider != null) {
+            String databaseId = databaseIdProvider.getDatabaseId(environment.getDataSource());
+
+            configuration.setDatabaseId(databaseId);
+        }
+    }
 
     /**
      * xml 中读取配置数据,转换为 Properties
@@ -368,7 +392,7 @@ public class XMLConfigBuilder extends BaseBuilder {
         configuration.setAutoMappingBehavior(AutoMappingBehavior.valueOf(props.getProperty("autoMappingBehavior", "PARTIAL")));
 
         //TODO 临时注释 涉及到 mapping 模块
-        //configuration.setAutoMappingUnknownColumnBehavior(AutoMappingUnknownColumnBehavior.valueOf(props.getProperty("autoMappingUnknownColumnBehavior", "NONE")));
+        configuration.setAutoMappingUnknownColumnBehavior(AutoMappingUnknownColumnBehavior.valueOf(props.getProperty("autoMappingUnknownColumnBehavior", "NONE")));
 
         //全局性的配置是否启用缓存
         configuration.setCacheEnabled(booleanValueOf(props.getProperty("cacheEnabled"), true));

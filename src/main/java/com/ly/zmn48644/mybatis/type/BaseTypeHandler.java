@@ -3,6 +3,7 @@ package com.ly.zmn48644.mybatis.type;
 
 
 import com.ly.zmn48644.mybatis.exceptions.ResultMapException;
+import com.ly.zmn48644.mybatis.session.Configuration;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
@@ -11,13 +12,10 @@ import java.sql.SQLException;
 
 
 public abstract class BaseTypeHandler<T> extends TypeReference<T> implements TypeHandler<T> {
-
-    //TODO 这里先把 configuration 注释掉
-//  protected Configuration configuration;
-//
-//  public void setConfiguration(Configuration c) {
-//    this.configuration = c;
-//  }
+    protected Configuration configuration;
+    public void setConfiguration(Configuration c) {
+        this.configuration = c;
+    }
 
     @Override
     public void setParameter(PreparedStatement ps, int i, T parameter, JdbcType jdbcType) throws SQLException {

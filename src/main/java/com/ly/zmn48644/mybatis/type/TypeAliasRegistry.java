@@ -172,7 +172,6 @@ public class TypeAliasRegistry {
         String key = alias.toLowerCase(Locale.ENGLISH);
 
         //保证这个别名没有被注册过,如果重复注册则抛出异常
-        //TODO 这里的疑问就是为什么要这么复杂的判断
         if (TYPE_ALIASES.containsKey(key) && TYPE_ALIASES.get(key) != null && !TYPE_ALIASES.get(key).equals(value)) {
             throw new TypeException("The alias '" + alias + "' is already mapped to the value '" + TYPE_ALIASES.get(key).getName() + "'.");
         }

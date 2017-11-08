@@ -2,6 +2,8 @@
 package com.ly.zmn48644.mybatis.session;
 
 
+import com.ly.zmn48644.mybatis.executor.BatchResult;
+
 import java.io.Closeable;
 import java.sql.Connection;
 import java.util.List;
@@ -12,12 +14,10 @@ import java.util.Map;
  * 此接口定义了MyBatis的核心功能
  * 此接口的实现类是 DefaultSqlSession
  * 此接口是从业务层面分析的入口
- *
+ * <p>
  * 提供了两种执行SQL语句的方式
  * 第一种 通过namespace+statementId标识,比如  selectOne,selectList等方法
  * 第二种 通过获取mapper接口的方式,这种方式是比较推荐的
- *
- *
  */
 public interface SqlSession extends Closeable {
 
@@ -95,14 +95,7 @@ public interface SqlSession extends Closeable {
 
     void rollback(boolean force);
 
-    //TODO 临时注释 flushStatements
-//  /**
-//   * Flushes batch statements.
-//   * @return BatchResult list of updated records
-//   * @since 3.0.6
-//   */
-//  List<BatchResult> flushStatements();
-
+    List<BatchResult> flushStatements();
 
     @Override
     void close();
@@ -117,6 +110,7 @@ public interface SqlSession extends Closeable {
 
     /**
      * 获取内部的数据库连接对象
+     *
      * @return
      */
     Connection getConnection();
