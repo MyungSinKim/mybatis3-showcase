@@ -567,8 +567,8 @@ public class XMLConfigBuilder extends BaseBuilder {
      * 特别注意:
      * MyBatis是支持mapper接口和XML两种方式配置SQL语句,并且允许这两种方式同时存在.
      * 因此上面四种配置方式从根本上说可以分为两大类, 一种是配置mapper接口,另一种 就是 配置XML
-     * 从下面代码分析可以知道, 如果通过mapper接口配置,那么解析完接口后 也会去接口路径下去解析同名的XML配置文件.
-     * 如果通过XML文件配置,解析完XML文件后,也会通过命名空间去解析接口.
+     * 从下面代码分析可以知道,无论是上面那种方式配置,都是 调用 MapperRegistry.addMapper这个方法
+     * 这个方法中 解析注解配置,同时回去解析XML配置,解析XML时也会调用MapperRegistry.addMapper方法,通过判断是否加载避免死循环.
      *
      * @param parent
      * @throws Exception

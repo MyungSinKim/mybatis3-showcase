@@ -10,8 +10,6 @@ import com.ly.zmn48644.mybatis.session.Configuration;
 
 import java.io.InputStream;
 import java.io.Reader;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 

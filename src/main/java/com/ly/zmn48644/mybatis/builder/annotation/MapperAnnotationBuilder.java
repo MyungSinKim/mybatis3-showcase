@@ -23,7 +23,10 @@ public class MapperAnnotationBuilder {
     private final Set<Class<? extends Annotation>> sqlAnnotationTypes = new HashSet<Class<? extends Annotation>>();
     private final Set<Class<? extends Annotation>> sqlProviderAnnotationTypes = new HashSet<Class<? extends Annotation>>();
 
+    //全局唯一配置对象
     private final Configuration configuration;
+    //每个 mapper 对应一个 自己的 MapperAnnotationBuilder 对象.
+    //每个 MapperAnnotationBuilder 对象对应一个自己独有的MapperBuilderAssistant对象.
     private final MapperBuilderAssistant assistant;
     private final Class<?> type;
 
@@ -44,11 +47,16 @@ public class MapperAnnotationBuilder {
         sqlProviderAnnotationTypes.add(DeleteProvider.class);
     }
 
+
+    /**
+     * 解析通过注解配置的SQL信息
+     */
     public void parse() {
         String resource = type.toString();
         if (!configuration.isResourceLoaded(resource)) {
-            //加载
+            //首先去尝试加载XML配置资源
             loadXmlResource();
+
             configuration.addLoadedResource(resource);
             assistant.setCurrentNamespace(type.getName());
             parseCache();
