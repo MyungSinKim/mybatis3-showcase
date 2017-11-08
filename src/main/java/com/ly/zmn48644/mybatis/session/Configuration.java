@@ -10,6 +10,7 @@ import com.ly.zmn48644.mybatis.cache.Cache;
 import com.ly.zmn48644.mybatis.io.VFS;
 import com.ly.zmn48644.mybatis.logging.Log;
 import com.ly.zmn48644.mybatis.mapping.Environment;
+import com.ly.zmn48644.mybatis.mapping.ParameterMap;
 import com.ly.zmn48644.mybatis.mapping.ResultMap;
 import com.ly.zmn48644.mybatis.parsing.XNode;
 import com.ly.zmn48644.mybatis.reflection.DefaultReflectorFactory;
@@ -32,10 +33,15 @@ import java.util.*;
 public class Configuration {
     //TODO 未完成 Configuration
 
+    //数据库ID配置
+    protected String databaseId;
 
     protected final Map<String, String> cacheRefMap = new HashMap<String, String>();
 
     protected final Set<String> loadedResources = new HashSet<String>();
+
+    //未来可能会别移除
+    protected final Map<String, ParameterMap> parameterMaps = new StrictMap<ParameterMap>("Parameter Maps collection");
 
     protected final Map<String, ResultMap> resultMaps = new StrictMap<ResultMap>("Result Maps collection");
     protected final Map<String, Cache> caches = new StrictMap<Cache>("Caches collection");
@@ -166,6 +172,10 @@ public class Configuration {
         incompleteCacheRefs.add(incompleteCacheRef);
     }
 
+    public void addParameterMap(ParameterMap pm) {
+        parameterMaps.put(pm.getId(), pm);
+    }
+
     public void addResultMap(ResultMap rm) {
         resultMaps.put(rm.getId(), rm);
         checkLocallyForDiscriminatedNestedResultMaps(rm);
@@ -268,6 +278,7 @@ public class Configuration {
     public void addIncompleteResultMap(ResultMapResolver resultMapResolver) {
         incompleteResultMaps.add(resultMapResolver);
     }
+
     public Collection<XMLStatementBuilder> getIncompleteStatements() {
         return incompleteStatements;
     }
@@ -620,5 +631,11 @@ public class Configuration {
                 }
             }
         }
+    }
+    public void addIncompleteStatement(XMLStatementBuilder incompleteStatement) {
+        incompleteStatements.add(incompleteStatement);
+    }
+    public String getDatabaseId() {
+        return databaseId;
     }
 }

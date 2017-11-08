@@ -108,12 +108,12 @@ public class MapperBuilderAssistant extends BaseBuilder {
         return cache;
     }
 
-//    public ParameterMap addParameterMap(String id, Class<?> parameterClass, List<ParameterMapping> parameterMappings) {
-//        id = applyCurrentNamespace(id, false);
-//        ParameterMap parameterMap = new ParameterMap.Builder(configuration, id, parameterClass, parameterMappings).build();
-//        configuration.addParameterMap(parameterMap);
-//        return parameterMap;
-//    }
+    public ParameterMap addParameterMap(String id, Class<?> parameterClass, List<ParameterMapping> parameterMappings) {
+        id = applyCurrentNamespace(id, false);
+        ParameterMap parameterMap = new ParameterMap.Builder(configuration, id, parameterClass, parameterMappings).build();
+        configuration.addParameterMap(parameterMap);
+        return parameterMap;
+    }
 
     public ParameterMapping buildParameterMapping(
             Class<?> parameterType,

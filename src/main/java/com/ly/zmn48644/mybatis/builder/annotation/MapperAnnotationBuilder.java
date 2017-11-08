@@ -15,14 +15,9 @@ import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Clinton Begin
- */
 public class MapperAnnotationBuilder {
-
     private final Set<Class<? extends Annotation>> sqlAnnotationTypes = new HashSet<Class<? extends Annotation>>();
     private final Set<Class<? extends Annotation>> sqlProviderAnnotationTypes = new HashSet<Class<? extends Annotation>>();
-
     //全局唯一配置对象
     private final Configuration configuration;
     //每个 mapper 对应一个 自己的 MapperAnnotationBuilder 对象.
