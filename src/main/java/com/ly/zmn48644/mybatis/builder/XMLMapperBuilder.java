@@ -17,9 +17,11 @@ import java.io.Reader;
 import java.util.*;
 
 public class XMLMapperBuilder extends BaseBuilder {
-
+    //获取xml配置中的指定节点的数据
     private final XPathParser parser;
+    //SQL片段集合
     private final Map<String, XNode> sqlFragments;
+    //辅助当前类完成具体节点的解析
     private final MapperBuilderAssistant builderAssistant;
     private final String resource;
 
@@ -248,13 +250,24 @@ public class XMLMapperBuilder extends BaseBuilder {
          * 获取节点 id 属性,如果id属性没有设置则 调用 resultMapNode.getValueBasedIdentifier()生成一个id
          */
         String id = resultMapNode.getStringAttribute("id", resultMapNode.getValueBasedIdentifier());
-
+        /**
+         * 按照  type -> ofType -> resultType -> javaType 的优先级获取配置
+         */
         String type = resultMapNode.getStringAttribute("type", resultMapNode.getStringAttribute("ofType", resultMapNode.getStringAttribute("resultType", resultMapNode.getStringAttribute("javaType"))));
 
+        /**
+         * 获取 extends 属性配置
+         */
         String extend = resultMapNode.getStringAttribute("extends");
 
+        /**
+         * 获取 autoMapping 属性配置
+         */
         Boolean autoMapping = resultMapNode.getBooleanAttribute("autoMapping");
 
+        /**
+         * 获取 type 的class
+         */
         Class<?> typeClass = resolveClass(type);
 
         Discriminator discriminator = null;
@@ -263,20 +276,23 @@ public class XMLMapperBuilder extends BaseBuilder {
 
         resultMappings.addAll(additionalResultMappings);
 
+        //获取所有子节点
         List<XNode> resultChildren = resultMapNode.getChildren();
-
+        //开始遍历所有子节点
         for (XNode resultChild : resultChildren) {
-
+            //判断当前子节点是否是 constructor 标签
             if ("constructor".equals(resultChild.getName())) {
-
+                //处理constructor标签内子元素
                 processConstructorElement(resultChild, typeClass, resultMappings);
 
             } else if ("discriminator".equals(resultChild.getName())) {
-
+                //处理鉴别器节点的子元素
                 discriminator = processDiscriminatorElement(resultChild, typeClass, resultMappings);
             } else {
+                //处理普通映射节点
                 List<ResultFlag> flags = new ArrayList<ResultFlag>();
                 if ("id".equals(resultChild.getName())) {
+                    //如果是id节点
                     flags.add(ResultFlag.ID);
                 }
                 resultMappings.add(buildResultMappingFromContext(resultChild, typeClass, flags));
@@ -284,8 +300,10 @@ public class XMLMapperBuilder extends BaseBuilder {
         }
         ResultMapResolver resultMapResolver = new ResultMapResolver(builderAssistant, id, typeClass, extend, discriminator, resultMappings, autoMapping);
         try {
+            //调用 resolve 方法将 resultMap 添加到全局配置对象中区
             return resultMapResolver.resolve();
         } catch (IncompleteElementException e) {
+            //如果抛出异常则 添加到 需要重新处理的resultMap集合中去
             configuration.addIncompleteResultMap(resultMapResolver);
             throw e;
         }
