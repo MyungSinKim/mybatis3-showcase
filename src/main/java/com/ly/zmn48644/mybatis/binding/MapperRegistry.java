@@ -81,7 +81,6 @@ public class MapperRegistry {
             boolean loadCompleted = false;
             try {
                 knownMappers.put(type, new MapperProxyFactory<T>(type));
-
                 //解析接口中通过注解配置的SQL
                 MapperAnnotationBuilder parser = new MapperAnnotationBuilder(config, type);
                 parser.parse();

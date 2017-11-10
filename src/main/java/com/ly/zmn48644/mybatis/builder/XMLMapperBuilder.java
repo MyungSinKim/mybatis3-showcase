@@ -84,13 +84,15 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
 
     /**
-     * 注册mapper
+     * 完成 映射配置文件与对应Mapper接口的绑定
      */
     private void bindMapperForNamespace() {
+        //获取命名空间
         String namespace = builderAssistant.getCurrentNamespace();
         if (namespace != null) {
             Class<?> boundType = null;
             try {
+                //获取命名空间指向的Mapper接口的class对象
                 boundType = Resources.classForName(namespace);
             } catch (ClassNotFoundException e) {
                 //ignore, bound type is not required
@@ -195,8 +197,10 @@ public class XMLMapperBuilder extends BaseBuilder {
             cacheElement(context.evalNode("cache"));
             //parameterMap – 已废弃！老式风格的参数映射。内联参数是首选,这个元素可能在将来被移除，这里不会记录。
             parameterMapElement(context.evalNodes("/mapper/parameterMap"));
+
             //解析结果集映射配置
             resultMapElements(context.evalNodes("/mapper/resultMap"));
+
             //解析SQL标签元素
             sqlElement(context.evalNodes("/mapper/sql"));
             //解析 statement
@@ -207,7 +211,14 @@ public class XMLMapperBuilder extends BaseBuilder {
         }
     }
 
+    /**
+     * 解析映射配置文件中的 resultMap 标签
+     *
+     * @param list
+     * @throws Exception
+     */
     private void resultMapElements(List<XNode> list) throws Exception {
+        //可能存在多个 resultMap 标签
         for (XNode resultMapNode : list) {
             try {
                 resultMapElement(resultMapNode);
@@ -221,25 +232,47 @@ public class XMLMapperBuilder extends BaseBuilder {
         return resultMapElement(resultMapNode, Collections.<ResultMapping>emptyList());
     }
 
+    /**
+     * 解析 resultMap 节点
+     * 参考官方文档:http://www.mybatis.org/mybatis-3/zh/sqlmap-xml.html#Result_Maps
+     *
+     * @param resultMapNode
+     * @param additionalResultMappings
+     * @return
+     * @throws Exception
+     */
     private ResultMap resultMapElement(XNode resultMapNode, List<ResultMapping> additionalResultMappings) throws Exception {
         ErrorContext.instance().activity("processing " + resultMapNode.getValueBasedIdentifier());
-        String id = resultMapNode.getStringAttribute("id",
-                resultMapNode.getValueBasedIdentifier());
-        String type = resultMapNode.getStringAttribute("type",
-                resultMapNode.getStringAttribute("ofType",
-                        resultMapNode.getStringAttribute("resultType",
-                                resultMapNode.getStringAttribute("javaType"))));
+
+        /**
+         * 获取节点 id 属性,如果id属性没有设置则 调用 resultMapNode.getValueBasedIdentifier()生成一个id
+         */
+        String id = resultMapNode.getStringAttribute("id", resultMapNode.getValueBasedIdentifier());
+
+        String type = resultMapNode.getStringAttribute("type", resultMapNode.getStringAttribute("ofType", resultMapNode.getStringAttribute("resultType", resultMapNode.getStringAttribute("javaType"))));
+
         String extend = resultMapNode.getStringAttribute("extends");
+
         Boolean autoMapping = resultMapNode.getBooleanAttribute("autoMapping");
+
         Class<?> typeClass = resolveClass(type);
+
         Discriminator discriminator = null;
+
         List<ResultMapping> resultMappings = new ArrayList<ResultMapping>();
+
         resultMappings.addAll(additionalResultMappings);
+
         List<XNode> resultChildren = resultMapNode.getChildren();
+
         for (XNode resultChild : resultChildren) {
+
             if ("constructor".equals(resultChild.getName())) {
+
                 processConstructorElement(resultChild, typeClass, resultMappings);
+
             } else if ("discriminator".equals(resultChild.getName())) {
+
                 discriminator = processDiscriminatorElement(resultChild, typeClass, resultMappings);
             } else {
                 List<ResultFlag> flags = new ArrayList<ResultFlag>();

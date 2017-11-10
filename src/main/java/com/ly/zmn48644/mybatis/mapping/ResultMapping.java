@@ -13,26 +13,55 @@ import java.util.List;
 import java.util.Set;
 
 public class ResultMapping {
-
+    //全局配置对象
     private Configuration configuration;
+    //对应节点的 property 属性,也就是javabean中属性名
     private String property;
+    //对应节点的 column 属性,就是 数据库表中的字段名
     private String column;
+    //对应节点 javaType属性,可以是一个javaBean的全限定名或者一个类的别名
     private Class<?> javaType;
+    //对应节点的 jdbcType属性,表中字段的jdbc类型
     private JdbcType jdbcType;
+    //类型处理器
     private TypeHandler<?> typeHandler;
+
+    //对应节点的 resultMap 属性,此属性通过ID引用了另外一个<resultMap>节点定义,它负责将结果集中的一部分列映射城其他关联的结果对象
+    //这样我们就可以通过join方式进行关联查询,然后直接映射城多个对象,并同时设置这些对象的组合关系
     private String nestedResultMapId;
+
+    /**
+     * 对应节点的 select 属性,该属性通过id引用了另一个<select>定义
+     * 它会把指定的列的值传入select属性指定的select语句中作为参数进行查询.使用select属性可能导致N+1问题,需要注意
+     */
     private String nestedQueryId;
+
+    //对应节点 notNullColumn属性拆分后的结果
     private Set<String> notNullColumns;
+
+    //对应节点的columnPrefix属性
     private String columnPrefix;
+
+    //处理后的标记,id和constructor
     private List<ResultFlag> flags;
+
+    //对应节点的column属性拆分后生成的结果,composites.size()>0会使column为null
     private List<ResultMapping> composites;
+
+    //对应节点的resultSet属性
     private String resultSet;
+    //对应节点的 foreignColumn 属性
     private String foreignColumn;
+    //是否延迟加载,对应节点的 fetchType 属性
     private boolean lazy;
 
     ResultMapping() {
     }
 
+
+    /**
+     * 建造者模式内部类
+     */
     public static class Builder {
         private ResultMapping resultMapping = new ResultMapping();
 
@@ -118,6 +147,7 @@ public class ResultMapping {
 
         public ResultMapping build() {
             // lock down collections
+            //锁定集合,将集合包装秤不可变集合
             resultMapping.flags = Collections.unmodifiableList(resultMapping.flags);
             resultMapping.composites = Collections.unmodifiableList(resultMapping.composites);
             resolveTypeHandler();
@@ -125,6 +155,10 @@ public class ResultMapping {
             return resultMapping;
         }
 
+
+        /**
+         * 验证逻辑
+         */
         private void validate() {
             // Issue #697: cannot define both nestedQueryId and nestedResultMapId
             if (resultMapping.nestedQueryId != null && resultMapping.nestedResultMapId != null) {

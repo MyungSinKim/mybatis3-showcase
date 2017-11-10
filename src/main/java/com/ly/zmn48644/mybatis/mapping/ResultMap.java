@@ -15,20 +15,44 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 
 
+/**
+ * 每个 <resultMap> 节点都会对应一个 ResultMap类对象
+ */
 public class ResultMap {
+    //全局配置对象
     private Configuration configuration;
 
+    //<resultMap>节点的id属性
     private String id;
+    //<resultMap>节点的 type 属性
     private Class<?> type;
+
+    //记录了除<discriminator>节点之外的其他映射关系
     private List<ResultMapping> resultMappings;
+
+    //记录了映射关系中带有ID标志的映射关系
+    //比如 <id> , <constructor> , <idArg> 节点
     private List<ResultMapping> idResultMappings;
+
+    //记录了映射关系中带有 Constructor标记的映射关系,比如<constructor>所有的子元素
     private List<ResultMapping> constructorResultMappings;
+    //记录了映射关系中不带有 Constructor标记的关系映射
     private List<ResultMapping> propertyResultMappings;
+
+    //记录所有映射关系中涉及的column属性的集合
     private Set<String> mappedColumns;
+
     private Set<String> mappedProperties;
+
+    //鉴别其,对应 <discriminator> 节点
     private Discriminator discriminator;
+
+    //是否含有嵌套的结果映射,如果某个映射关系存在resultMap属性,并且不存在 resultSet属性则为true
     private boolean hasNestedResultMaps;
+
+    //是否含有嵌套查询,如果某个属性映射存在 select属性,则为true
     private boolean hasNestedQueries;
+    //是否开启自动映射
     private Boolean autoMapping;
 
     private ResultMap() {
