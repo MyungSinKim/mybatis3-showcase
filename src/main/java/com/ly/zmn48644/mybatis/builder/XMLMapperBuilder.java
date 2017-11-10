@@ -252,24 +252,29 @@ public class XMLMapperBuilder extends BaseBuilder {
         String id = resultMapNode.getStringAttribute("id", resultMapNode.getValueBasedIdentifier());
         /**
          * 按照  type -> ofType -> resultType -> javaType 的优先级获取配置
+         * 结果集将会被映射成 type指定的对象,注意默认值
          */
         String type = resultMapNode.getStringAttribute("type", resultMapNode.getStringAttribute("ofType", resultMapNode.getStringAttribute("resultType", resultMapNode.getStringAttribute("javaType"))));
 
         /**
-         * 获取 extends 属性配置
+         * 获取 extends 属性配置,此属性决定了当前resultMap的继承关系
          */
         String extend = resultMapNode.getStringAttribute("extends");
 
         /**
-         * 获取 autoMapping 属性配置
+         * 获取 autoMapping 属性配置,自动查找与列名 相同的属性名,调用set方法设置值,如果为false则需要在<resultMap>节点中明确指定映射关系
+         * 才会调用set方法设置值
          */
         Boolean autoMapping = resultMapNode.getBooleanAttribute("autoMapping");
 
         /**
-         * 获取 type 的class
+         * 解析type类型
          */
         Class<?> typeClass = resolveClass(type);
 
+        /**
+         * 鉴别器在实际项目中用的场景比较少
+         */
         Discriminator discriminator = null;
 
         List<ResultMapping> resultMappings = new ArrayList<ResultMapping>();
@@ -375,6 +380,14 @@ public class XMLMapperBuilder extends BaseBuilder {
         }
     }
 
+    /**
+     * 处理 constructor 标签元素
+     *
+     * @param resultChild
+     * @param resultType
+     * @param resultMappings
+     * @throws Exception
+     */
     private void processConstructorElement(XNode resultChild, Class<?> resultType, List<ResultMapping> resultMappings) throws Exception {
         List<XNode> argChildren = resultChild.getChildren();
         for (XNode argChild : argChildren) {
@@ -405,6 +418,17 @@ public class XMLMapperBuilder extends BaseBuilder {
         return builderAssistant.buildDiscriminator(resultType, column, javaTypeClass, jdbcTypeEnum, typeHandlerClass, discriminatorMap);
     }
 
+    /**
+     * 构建 ResultMapping 方法
+     * 此方法中调用 builderAssistant 进行真正的创建
+     * 这个方法中解析拼装参数
+     *
+     * @param context
+     * @param resultType
+     * @param flags
+     * @return
+     * @throws Exception
+     */
     private ResultMapping buildResultMappingFromContext(XNode context, Class<?> resultType, List<ResultFlag> flags) throws Exception {
         String property;
         if (flags.contains(ResultFlag.CONSTRUCTOR)) {
@@ -428,9 +452,18 @@ public class XMLMapperBuilder extends BaseBuilder {
         @SuppressWarnings("unchecked")
         Class<? extends TypeHandler<?>> typeHandlerClass = (Class<? extends TypeHandler<?>>) resolveClass(typeHandler);
         JdbcType jdbcTypeEnum = resolveJdbcType(jdbcType);
+
+        //调用 建造者助理类 完成具体的创建工作.
         return builderAssistant.buildResultMapping(resultType, property, column, javaTypeClass, jdbcTypeEnum, nestedSelect, nestedResultMap, notNullColumn, columnPrefix, typeHandlerClass, flags, resultSet, foreignColumn, lazy);
     }
 
+    /**
+     * 这里处理嵌套的映射
+     * @param context
+     * @param resultMappings
+     * @return
+     * @throws Exception
+     */
     private String processNestedResultMappings(XNode context, List<ResultMapping> resultMappings) throws Exception {
         if ("association".equals(context.getName())
                 || "collection".equals(context.getName())

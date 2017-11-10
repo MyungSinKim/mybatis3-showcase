@@ -387,11 +387,9 @@ public class XMLConfigBuilder extends BaseBuilder {
      * @throws Exception
      */
     private void settingsElement(Properties props) throws Exception {
-        //TODO 此配置需要写代码验证
         //结果集映射配置, 默认配置为 PARTIAL.
         configuration.setAutoMappingBehavior(AutoMappingBehavior.valueOf(props.getProperty("autoMappingBehavior", "PARTIAL")));
 
-        //TODO 临时注释 涉及到 mapping 模块
         configuration.setAutoMappingUnknownColumnBehavior(AutoMappingUnknownColumnBehavior.valueOf(props.getProperty("autoMappingUnknownColumnBehavior", "NONE")));
 
         //全局性的配置是否启用缓存
@@ -603,7 +601,6 @@ public class XMLConfigBuilder extends BaseBuilder {
                 //如果配置文件中指定了 package 则获取包名
                 if ("package".equals(child.getName())) {
                     String mapperPackage = child.getStringAttribute("name");
-                    //TODO 注释 使用 package 指定一个包,注册包下所有的接口
                     configuration.addMappers(mapperPackage);
                 } else {
                     String resource = child.getStringAttribute("resource");
