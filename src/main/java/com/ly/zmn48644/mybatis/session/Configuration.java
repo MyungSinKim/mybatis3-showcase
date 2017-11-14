@@ -15,6 +15,7 @@ import com.ly.zmn48644.mybatis.cache.impl.PerpetualCache;
 import com.ly.zmn48644.mybatis.datasource.jndi.JndiDataSourceFactory;
 import com.ly.zmn48644.mybatis.datasource.pooled.PooledDataSourceFactory;
 import com.ly.zmn48644.mybatis.datasource.unpooled.UnpooledDataSourceFactory;
+import com.ly.zmn48644.mybatis.executor.keygen.KeyGenerator;
 import com.ly.zmn48644.mybatis.io.VFS;
 import com.ly.zmn48644.mybatis.logging.Log;
 import com.ly.zmn48644.mybatis.logging.commons.JakartaCommonsLoggingImpl;
@@ -91,6 +92,7 @@ public class Configuration {
         languageRegistry.register(RawLanguageDriver.class);
     }
 
+    protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<KeyGenerator>("Key Generators collection");
 
     protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
@@ -586,6 +588,27 @@ public class Configuration {
     }
 
 
+    public void addKeyGenerator(String id, KeyGenerator keyGenerator) {
+        keyGenerators.put(id, keyGenerator);
+    }
+
+    public Collection<String> getKeyGeneratorNames() {
+        return keyGenerators.keySet();
+    }
+
+    public Collection<KeyGenerator> getKeyGenerators() {
+        return keyGenerators.values();
+    }
+
+    public KeyGenerator getKeyGenerator(String id) {
+        return keyGenerators.get(id);
+    }
+
+    public boolean hasKeyGenerator(String id) {
+        return keyGenerators.containsKey(id);
+    }
+
+
     /**
      * 静态内部类
      *
@@ -722,7 +745,68 @@ public class Configuration {
     public ParameterMap getParameterMap(String id) {
         return parameterMaps.get(id);
     }
+
     public void addMappedStatement(MappedStatement ms) {
         mappedStatements.put(ms.getId(), ms);
+    }
+
+    public MappedStatement getMappedStatement(String id) {
+        return this.getMappedStatement(id, true);
+    }
+
+    public MappedStatement getMappedStatement(String id, boolean validateIncompleteStatements) {
+        if (validateIncompleteStatements) {
+            buildAllStatements();
+        }
+        return mappedStatements.get(id);
+    }
+
+    public boolean hasStatement(String statementName) {
+        return hasStatement(statementName, true);
+    }
+
+    public boolean hasStatement(String statementName, boolean validateIncompleteStatements) {
+        if (validateIncompleteStatements) {
+            buildAllStatements();
+        }
+        return mappedStatements.containsKey(statementName);
+    }
+
+
+    public Collection<String> getMappedStatementNames() {
+        buildAllStatements();
+        return mappedStatements.keySet();
+    }
+
+    public Collection<MappedStatement> getMappedStatements() {
+        buildAllStatements();
+        return mappedStatements.values();
+    }
+
+    protected void buildAllStatements() {
+        if (!incompleteResultMaps.isEmpty()) {
+            synchronized (incompleteResultMaps) {
+                // This always throws a BuilderException.
+                incompleteResultMaps.iterator().next().resolve();
+            }
+        }
+        if (!incompleteCacheRefs.isEmpty()) {
+            synchronized (incompleteCacheRefs) {
+                // This always throws a BuilderException.
+                incompleteCacheRefs.iterator().next().resolveCacheRef();
+            }
+        }
+        if (!incompleteStatements.isEmpty()) {
+            synchronized (incompleteStatements) {
+                // This always throws a BuilderException.
+                incompleteStatements.iterator().next().parseStatementNode();
+            }
+        }
+        if (!incompleteMethods.isEmpty()) {
+            synchronized (incompleteMethods) {
+                // This always throws a BuilderException.
+                incompleteMethods.iterator().next().resolve();
+            }
+        }
     }
 }

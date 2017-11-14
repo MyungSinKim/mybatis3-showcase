@@ -6,6 +6,7 @@ import com.ly.zmn48644.mybatis.cache.Cache;
 import com.ly.zmn48644.mybatis.cache.decorators.LruCache;
 import com.ly.zmn48644.mybatis.cache.impl.PerpetualCache;
 import com.ly.zmn48644.mybatis.executor.ErrorContext;
+import com.ly.zmn48644.mybatis.executor.keygen.KeyGenerator;
 import com.ly.zmn48644.mybatis.mapping.*;
 import com.ly.zmn48644.mybatis.reflection.MetaClass;
 import com.ly.zmn48644.mybatis.scripting.LanguageDriver;
@@ -13,7 +14,7 @@ import com.ly.zmn48644.mybatis.session.Configuration;
 import com.ly.zmn48644.mybatis.type.JdbcType;
 import com.ly.zmn48644.mybatis.type.TypeHandler;
 
-import javax.crypto.KeyGenerator;
+
 import java.util.*;
 
 /**

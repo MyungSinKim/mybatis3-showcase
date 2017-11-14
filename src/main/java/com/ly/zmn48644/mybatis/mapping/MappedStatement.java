@@ -2,12 +2,13 @@
 package com.ly.zmn48644.mybatis.mapping;
 
 import com.ly.zmn48644.mybatis.cache.Cache;
+import com.ly.zmn48644.mybatis.executor.keygen.KeyGenerator;
 import com.ly.zmn48644.mybatis.logging.Log;
 import com.ly.zmn48644.mybatis.logging.LogFactory;
 import com.ly.zmn48644.mybatis.scripting.LanguageDriver;
 import com.ly.zmn48644.mybatis.session.Configuration;
 
-import javax.crypto.KeyGenerator;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
