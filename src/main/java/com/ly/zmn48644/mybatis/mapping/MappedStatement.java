@@ -2,7 +2,9 @@
 package com.ly.zmn48644.mybatis.mapping;
 
 import com.ly.zmn48644.mybatis.cache.Cache;
+import com.ly.zmn48644.mybatis.executor.keygen.Jdbc3KeyGenerator;
 import com.ly.zmn48644.mybatis.executor.keygen.KeyGenerator;
+import com.ly.zmn48644.mybatis.executor.keygen.NoKeyGenerator;
 import com.ly.zmn48644.mybatis.logging.Log;
 import com.ly.zmn48644.mybatis.logging.LogFactory;
 import com.ly.zmn48644.mybatis.scripting.LanguageDriver;
@@ -14,6 +16,9 @@ import java.util.Collections;
 import java.util.List;
 
 
+/**
+ * 映射配置文件中定义的SQL节点会被解析成此类对象
+ */
 public final class MappedStatement {
 
     private String resource;
@@ -55,8 +60,8 @@ public final class MappedStatement {
             mappedStatement.parameterMap = new ParameterMap.Builder(configuration, "defaultParameterMap", null, new ArrayList<ParameterMapping>()).build();
             mappedStatement.resultMaps = new ArrayList<ResultMap>();
             mappedStatement.sqlCommandType = sqlCommandType;
-            //TODO 临时注释
-            //mappedStatement.keyGenerator = configuration.isUseGeneratedKeys() && SqlCommandType.INSERT.equals(sqlCommandType) ? Jdbc3KeyGenerator.INSTANCE : NoKeyGenerator.INSTANCE;
+
+            mappedStatement.keyGenerator = configuration.isUseGeneratedKeys() && SqlCommandType.INSERT.equals(sqlCommandType) ? Jdbc3KeyGenerator.INSTANCE : NoKeyGenerator.INSTANCE;
             String logId = id;
             if (configuration.getLogPrefix() != null) {
                 logId = configuration.getLogPrefix() + id;
@@ -279,26 +284,26 @@ public final class MappedStatement {
 
 
     //TODO 临时注释
-//  public BoundSql getBoundSql(Object parameterObject) {
-//    BoundSql boundSql = sqlSource.getBoundSql(parameterObject);
-//    List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
-//    if (parameterMappings == null || parameterMappings.isEmpty()) {
-//      boundSql = new BoundSql(configuration, boundSql.getSql(), parameterMap.getParameterMappings(), parameterObject);
-//    }
-//
-//    // check for nested result maps in parameter mappings (issue #30)
-//    for (ParameterMapping pm : boundSql.getParameterMappings()) {
-//      String rmId = pm.getResultMapId();
-//      if (rmId != null) {
-//        ResultMap rm = configuration.getResultMap(rmId);
-//        if (rm != null) {
-//          hasNestedResultMaps |= rm.hasNestedResultMaps();
-//        }
-//      }
-//    }
-//
-//    return boundSql;
-//  }
+  public BoundSql getBoundSql(Object parameterObject) {
+    BoundSql boundSql = sqlSource.getBoundSql(parameterObject);
+    List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
+    if (parameterMappings == null || parameterMappings.isEmpty()) {
+      boundSql = new BoundSql(configuration, boundSql.getSql(), parameterMap.getParameterMappings(), parameterObject);
+    }
+
+    // check for nested result maps in parameter mappings (issue #30)
+    for (ParameterMapping pm : boundSql.getParameterMappings()) {
+      String rmId = pm.getResultMapId();
+      if (rmId != null) {
+        ResultMap rm = configuration.getResultMap(rmId);
+        if (rm != null) {
+          hasNestedResultMaps |= rm.hasNestedResultMaps();
+        }
+      }
+    }
+
+    return boundSql;
+  }
 
     private static String[] delimitedStringToArray(String in) {
         if (in == null || in.trim().length() == 0) {
