@@ -283,7 +283,6 @@ public final class MappedStatement {
     }
 
 
-    //TODO 临时注释
   public BoundSql getBoundSql(Object parameterObject) {
     BoundSql boundSql = sqlSource.getBoundSql(parameterObject);
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();

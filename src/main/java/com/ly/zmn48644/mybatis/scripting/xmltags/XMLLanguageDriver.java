@@ -12,18 +12,18 @@ import com.ly.zmn48644.mybatis.session.Configuration;
 
 public class XMLLanguageDriver implements LanguageDriver {
 
-  @Override
-  public ParameterHandler createParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql) {
-    return null;
-  }
+    @Override
+    public ParameterHandler createParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql) {
+        return null;
+    }
 
-  @Override
-  public SqlSource createSqlSource(Configuration configuration, XNode script, Class<?> parameterType) {
-    return null;
-  }
+    @Override
+    public SqlSource createSqlSource(Configuration configuration, XNode script, Class<?> parameterType) {
+        return null;
+    }
 
-  @Override
-  public SqlSource createSqlSource(Configuration configuration, String script, Class<?> parameterType) {
-    return null;
-  }
+    @Override
+    public SqlSource createSqlSource(Configuration configuration, String script, Class<?> parameterType) {
+        return null;
+    }
 }

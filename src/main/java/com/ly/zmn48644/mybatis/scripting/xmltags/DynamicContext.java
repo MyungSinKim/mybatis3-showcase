@@ -12,7 +12,9 @@ import ognl.PropertyAccessor;
 import java.util.HashMap;
 import java.util.Map;
 
-
+/**
+ * 动态SQL语句解析结果的容器
+ */
 public class DynamicContext {
 
     public static final String PARAMETER_OBJECT_KEY = "_parameter";
@@ -58,24 +60,36 @@ public class DynamicContext {
         return uniqueNumber++;
     }
 
+
+    /**
+     * 静态内部类
+     */
     static class ContextMap extends HashMap<String, Object> {
         private static final long serialVersionUID = 2977601501966151582L;
 
+        //传入的参数封装成MetaObject对象
         private MetaObject parameterMetaObject;
 
         public ContextMap(MetaObject parameterMetaObject) {
             this.parameterMetaObject = parameterMetaObject;
         }
 
+        /**
+         * 重写了get方法
+         * @param key
+         * @return
+         */
         @Override
         public Object get(Object key) {
             String strKey = (String) key;
+            //先从缓存中查找key
             if (super.containsKey(strKey)) {
                 return super.get(strKey);
             }
-
+            //如果没有找到
             if (parameterMetaObject != null) {
                 // issue #61 do not modify the context when reading
+                //从运行时参数中
                 return parameterMetaObject.getValue(strKey);
             }
 
@@ -83,6 +97,9 @@ public class DynamicContext {
         }
     }
 
+    /**
+     * 静态内部类
+     */
     static class ContextAccessor implements PropertyAccessor {
 
         @Override

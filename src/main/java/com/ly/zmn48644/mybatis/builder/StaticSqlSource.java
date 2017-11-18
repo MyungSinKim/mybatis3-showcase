@@ -9,11 +9,18 @@ import com.ly.zmn48644.mybatis.session.Configuration;
 
 import java.util.List;
 
-
+/**
+ * 封装静态SQL语句
+ *
+ */
 public class StaticSqlSource implements SqlSource {
 
+    //可能包含? 的sql语句,可以直接发送给
+    //数据库进行执行
     private String sql;
+    //参数映射
     private List<ParameterMapping> parameterMappings;
+    //全局配置对象
     private Configuration configuration;
 
     public StaticSqlSource(Configuration configuration, String sql) {
