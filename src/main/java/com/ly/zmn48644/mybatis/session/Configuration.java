@@ -15,6 +15,7 @@ import com.ly.zmn48644.mybatis.cache.impl.PerpetualCache;
 import com.ly.zmn48644.mybatis.datasource.jndi.JndiDataSourceFactory;
 import com.ly.zmn48644.mybatis.datasource.pooled.PooledDataSourceFactory;
 import com.ly.zmn48644.mybatis.datasource.unpooled.UnpooledDataSourceFactory;
+import com.ly.zmn48644.mybatis.executor.Executor;
 import com.ly.zmn48644.mybatis.executor.keygen.KeyGenerator;
 import com.ly.zmn48644.mybatis.io.VFS;
 import com.ly.zmn48644.mybatis.logging.Log;
@@ -37,6 +38,7 @@ import com.ly.zmn48644.mybatis.reflection.warpper.ObjectWrapperFactory;
 import com.ly.zmn48644.mybatis.scripting.LanguageDriverRegistry;
 import com.ly.zmn48644.mybatis.scripting.defaults.RawLanguageDriver;
 import com.ly.zmn48644.mybatis.scripting.xmltags.XMLLanguageDriver;
+import com.ly.zmn48644.mybatis.transaction.Transaction;
 import com.ly.zmn48644.mybatis.transaction.jdbc.JdbcTransactionFactory;
 import com.ly.zmn48644.mybatis.transaction.managed.ManagedTransactionFactory;
 import com.ly.zmn48644.mybatis.type.JdbcType;
@@ -204,6 +206,30 @@ public class Configuration {
     protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<CacheRefResolver>();
     protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<ResultMapResolver>();
     protected final Collection<MethodResolver> incompleteMethods = new LinkedList<MethodResolver>();
+
+
+    public Executor newExecutor(Transaction transaction) {
+        return newExecutor(transaction, defaultExecutorType);
+    }
+
+
+    public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
+        executorType = executorType == null ? defaultExecutorType : executorType;
+        executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
+        Executor executor;
+        if (ExecutorType.BATCH == executorType) {
+            executor = new BatchExecutor(this, transaction);
+        } else if (ExecutorType.REUSE == executorType) {
+            executor = new ReuseExecutor(this, transaction);
+        } else {
+            executor = new SimpleExecutor(this, transaction);
+        }
+        if (cacheEnabled) {
+            executor = new CachingExecutor(executor);
+        }
+        executor = (Executor) interceptorChain.pluginAll(executor);
+        return executor;
+    }
 
     public Map<String, XNode> getSqlFragments() {
         return sqlFragments;

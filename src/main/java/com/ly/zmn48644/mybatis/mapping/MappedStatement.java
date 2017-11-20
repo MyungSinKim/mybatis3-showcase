@@ -163,9 +163,6 @@ public final class MappedStatement {
             return this;
         }
 
-        /**
-         * @deprecated Use {@link #resultSets}
-         */
         @Deprecated
         public Builder resulSets(String resultSet) {
             mappedStatement.resultSets = delimitedStringToArray(resultSet);
