@@ -2,6 +2,7 @@
 package com.ly.zmn48644.mybatis.session.defaults;
 
 
+import com.ly.zmn48644.mybatis.executor.BatchResult;
 import com.ly.zmn48644.mybatis.session.Configuration;
 import com.ly.zmn48644.mybatis.session.ResultHandler;
 import com.ly.zmn48644.mybatis.session.RowBounds;
@@ -124,6 +125,11 @@ public class DefaultSqlSession implements SqlSession {
     }
 
     @Override
+    public List<BatchResult> flushStatements() {
+        return null;
+    }
+
+    @Override
     public void close() {
 
     }
@@ -135,19 +141,12 @@ public class DefaultSqlSession implements SqlSession {
 
     @Override
     public Configuration getConfiguration() {
-        return this.configuration;
+        return null;
     }
 
-
-    /**
-     * 获取
-     * @param type
-     * @param <T>
-     * @return
-     */
     @Override
     public <T> T getMapper(Class<T> type) {
-        return configuration.<T>getMapper(type, this);
+        return null;
     }
 
     @Override

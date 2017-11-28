@@ -16,9 +16,7 @@
 package com.ly.zmn48644.mybatis.session.defaults;
 
 
-import com.ly.zmn48644.mybatis.session.Configuration;
-import com.ly.zmn48644.mybatis.session.SqlSession;
-import com.ly.zmn48644.mybatis.session.SqlSessionFactory;
+import com.ly.zmn48644.mybatis.session.*;
 
 import java.sql.Connection;
 
@@ -27,48 +25,47 @@ import java.sql.Connection;
  */
 public class DefaultSqlSessionFactory implements SqlSessionFactory {
 
-    public DefaultSqlSessionFactory(Configuration configuration) {
-    }
 
-    /**
-     * 从 SqlSessionFactory 中获取一个 SqlSession
-     *
-     * @return
-     */
     @Override
     public SqlSession openSession() {
         return null;
     }
 
-
-    /**
-     * 从 SqlSessionFactory 中获取一个 SqlSession
-     * 提供指定是否自动提交功能
-     *
-     * @return
-     */
     @Override
     public SqlSession openSession(boolean autoCommit) {
         return null;
     }
 
-    /**
-     * 从 SqlSessionFactory 中获取一个 SqlSession
-     * 指定使用的真实数据库连接(Connection)
-     *
-     * @param connection
-     * @return
-     */
     @Override
     public SqlSession openSession(Connection connection) {
         return null;
     }
 
-    /**
-     * 获取全局配置方法
-     *
-     * @return
-     */
+    @Override
+    public SqlSession openSession(TransactionIsolationLevel level) {
+        return null;
+    }
+
+    @Override
+    public SqlSession openSession(ExecutorType execType) {
+        return null;
+    }
+
+    @Override
+    public SqlSession openSession(ExecutorType execType, boolean autoCommit) {
+        return null;
+    }
+
+    @Override
+    public SqlSession openSession(ExecutorType execType, TransactionIsolationLevel level) {
+        return null;
+    }
+
+    @Override
+    public SqlSession openSession(ExecutorType execType, Connection connection) {
+        return null;
+    }
+
     @Override
     public Configuration getConfiguration() {
         return null;

@@ -143,7 +143,7 @@ public class XPathParser {
 
     /**
      * 设置解析过程中可能需要填充的变量
-     *
+     * <p>
      * 此方法 在  XMLConfigBuilder#propertiesElement 中被使用
      *
      * @param variables

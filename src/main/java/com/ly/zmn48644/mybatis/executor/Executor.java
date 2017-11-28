@@ -14,7 +14,9 @@ import com.ly.zmn48644.mybatis.transaction.Transaction;
 import java.sql.SQLException;
 import java.util.List;
 
-
+/**
+ * 执行器接口
+ */
 public interface Executor {
 
     ResultHandler NO_RESULT_HANDLER = null;
