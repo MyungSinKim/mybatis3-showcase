@@ -21,15 +21,6 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
 
     public static final Jdbc3KeyGenerator INSTANCE = new Jdbc3KeyGenerator();
 
-    @Override
-    public void processBefore(Executor executor, MappedStatement ms, Statement stmt, Object parameter) {
-        // do nothing
-    }
-
-    @Override
-    public void processAfter(Executor executor, MappedStatement ms, Statement stmt, Object parameter) {
-        processBatch(ms, stmt, getParameters(parameter));
-    }
 
     public void processBatch(MappedStatement ms, Statement stmt, Collection<Object> parameters) {
         ResultSet rs = null;
@@ -111,6 +102,16 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
                 metaParam.setValue(property, value);
             }
         }
+    }
+
+    @Override
+    public void processBefore(com.ly.zmn48644.mybatis.executor.Executor executor, MappedStatement ms, Statement stmt, Object parameter) {
+
+    }
+
+    @Override
+    public void processAfter(com.ly.zmn48644.mybatis.executor.Executor executor, MappedStatement ms, Statement stmt, Object parameter) {
+        processBatch(ms, stmt, getParameters(parameter));
     }
 
 }

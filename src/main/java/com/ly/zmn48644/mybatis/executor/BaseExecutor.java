@@ -5,6 +5,7 @@ package com.ly.zmn48644.mybatis.executor;
 import com.ly.zmn48644.mybatis.cache.CacheKey;
 import com.ly.zmn48644.mybatis.cache.impl.PerpetualCache;
 import com.ly.zmn48644.mybatis.cursor.Cursor;
+import com.ly.zmn48644.mybatis.executor.statement.StatementUtil;
 import com.ly.zmn48644.mybatis.logging.Log;
 import com.ly.zmn48644.mybatis.logging.LogFactory;
 import com.ly.zmn48644.mybatis.logging.jdbc.ConnectionLogger;
@@ -23,6 +24,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import static com.ly.zmn48644.mybatis.executor.ExecutionPlaceholder.EXECUTION_PLACEHOLDER;
 
 
 public abstract class BaseExecutor implements Executor {

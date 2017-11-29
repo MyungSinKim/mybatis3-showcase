@@ -1,21 +1,8 @@
-/**
- * Copyright 2009-2016 the original author or authors.
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 package com.ly.zmn48644.mybatis.executor.keygen;
 
 
+import com.ly.zmn48644.mybatis.executor.Executor;
 import com.ly.zmn48644.mybatis.executor.ExecutorException;
 import com.ly.zmn48644.mybatis.mapping.MappedStatement;
 import com.ly.zmn48644.mybatis.reflection.MetaObject;
@@ -25,73 +12,56 @@ import com.ly.zmn48644.mybatis.session.RowBounds;
 
 import java.sql.Statement;
 import java.util.List;
-import java.util.concurrent.Executor;
 
-/**
- * @author Clinton Begin
- * @author Jeff Butler
- */
+
 public class SelectKeyGenerator implements KeyGenerator {
 
     public static final String SELECT_KEY_SUFFIX = "!selectKey";
-    private boolean executeBefore;
-    private MappedStatement keyStatement;
+    private final boolean executeBefore;
+    private final MappedStatement keyStatement;
 
     public SelectKeyGenerator(MappedStatement keyStatement, boolean executeBefore) {
         this.executeBefore = executeBefore;
         this.keyStatement = keyStatement;
     }
 
-    @Override
-    public void processBefore(Executor executor, MappedStatement ms, Statement stmt, Object parameter) {
-        if (executeBefore) {
-            processGeneratedKeys(executor, ms, parameter);
-        }
-    }
-
-    @Override
-    public void processAfter(Executor executor, MappedStatement ms, Statement stmt, Object parameter) {
-        if (!executeBefore) {
-            processGeneratedKeys(executor, ms, parameter);
-        }
-    }
 
     private void processGeneratedKeys(Executor executor, MappedStatement ms, Object parameter) {
-//        try {
-//            if (parameter != null && keyStatement != null && keyStatement.getKeyProperties() != null) {
-//                String[] keyProperties = keyStatement.getKeyProperties();
-//                final Configuration configuration = ms.getConfiguration();
-//                final MetaObject metaParam = configuration.newMetaObject(parameter);
-//                if (keyProperties != null) {
-//                    // Do not close keyExecutor.
-//                    // The transaction will be closed by parent executor.
-//                    Executor keyExecutor = configuration.newExecutor(executor.getTransaction(), ExecutorType.SIMPLE);
-//                    List<Object> values = keyExecutor.query(keyStatement, parameter, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER);
-//                    if (values.size() == 0) {
-//                        throw new ExecutorException("SelectKey returned no data.");
-//                    } else if (values.size() > 1) {
-//                        throw new ExecutorException("SelectKey returned more than one value.");
-//                    } else {
-//                        MetaObject metaResult = configuration.newMetaObject(values.get(0));
-//                        if (keyProperties.length == 1) {
-//                            if (metaResult.hasGetter(keyProperties[0])) {
-//                                setValue(metaParam, keyProperties[0], metaResult.getValue(keyProperties[0]));
-//                            } else {
-//                                // no getter for the property - maybe just a single value object
-//                                // so try that
-//                                setValue(metaParam, keyProperties[0], values.get(0));
-//                            }
-//                        } else {
-//                            handleMultipleProperties(keyProperties, metaParam, metaResult);
-//                        }
-//                    }
-//                }
-//            }
-//        } catch (ExecutorException e) {
-//            throw e;
-//        } catch (Exception e) {
-//            throw new ExecutorException("Error selecting key or setting result to parameter object. Cause: " + e, e);
-//        }
+        try {
+            if (parameter != null && keyStatement != null && keyStatement.getKeyProperties() != null) {
+                String[] keyProperties = keyStatement.getKeyProperties();
+                final Configuration configuration = ms.getConfiguration();
+                final MetaObject metaParam = configuration.newMetaObject(parameter);
+                if (keyProperties != null) {
+                    // Do not close keyExecutor.
+                    // The transaction will be closed by parent executor.
+                    Executor keyExecutor = configuration.newExecutor(executor.getTransaction(), ExecutorType.SIMPLE);
+                    List<Object> values = keyExecutor.query(keyStatement, parameter, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER);
+                    if (values.size() == 0) {
+                        throw new ExecutorException("SelectKey returned no data.");
+                    } else if (values.size() > 1) {
+                        throw new ExecutorException("SelectKey returned more than one value.");
+                    } else {
+                        MetaObject metaResult = configuration.newMetaObject(values.get(0));
+                        if (keyProperties.length == 1) {
+                            if (metaResult.hasGetter(keyProperties[0])) {
+                                setValue(metaParam, keyProperties[0], metaResult.getValue(keyProperties[0]));
+                            } else {
+                                // no getter for the property - maybe just a single value object
+                                // so try that
+                                setValue(metaParam, keyProperties[0], values.get(0));
+                            }
+                        } else {
+                            handleMultipleProperties(keyProperties, metaParam, metaResult);
+                        }
+                    }
+                }
+            }
+        } catch (ExecutorException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ExecutorException("Error selecting key or setting result to parameter object. Cause: " + e, e);
+        }
     }
 
     private void handleMultipleProperties(String[] keyProperties,
@@ -120,4 +90,19 @@ public class SelectKeyGenerator implements KeyGenerator {
             throw new ExecutorException("No setter found for the keyProperty '" + property + "' in " + metaParam.getOriginalObject().getClass().getName() + ".");
         }
     }
+
+    @Override
+    public void processBefore(com.ly.zmn48644.mybatis.executor.Executor executor, MappedStatement ms, Statement stmt, Object parameter) {
+        if (executeBefore) {
+            processGeneratedKeys(executor, ms, parameter);
+        }
+    }
+
+    @Override
+    public void processAfter(com.ly.zmn48644.mybatis.executor.Executor executor, MappedStatement ms, Statement stmt, Object parameter) {
+        if (!executeBefore) {
+            processGeneratedKeys(executor, ms, parameter);
+        }
+    }
+
 }

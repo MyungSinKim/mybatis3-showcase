@@ -15,8 +15,15 @@ import com.ly.zmn48644.mybatis.cache.impl.PerpetualCache;
 import com.ly.zmn48644.mybatis.datasource.jndi.JndiDataSourceFactory;
 import com.ly.zmn48644.mybatis.datasource.pooled.PooledDataSourceFactory;
 import com.ly.zmn48644.mybatis.datasource.unpooled.UnpooledDataSourceFactory;
-import com.ly.zmn48644.mybatis.executor.Executor;
+import com.ly.zmn48644.mybatis.executor.*;
 import com.ly.zmn48644.mybatis.executor.keygen.KeyGenerator;
+import com.ly.zmn48644.mybatis.executor.loader.ProxyFactory;
+import com.ly.zmn48644.mybatis.executor.loader.javassist.JavassistProxyFactory;
+import com.ly.zmn48644.mybatis.executor.parameter.ParameterHandler;
+import com.ly.zmn48644.mybatis.executor.resultset.DefaultResultSetHandler;
+import com.ly.zmn48644.mybatis.executor.resultset.ResultSetHandler;
+import com.ly.zmn48644.mybatis.executor.statement.RoutingStatementHandler;
+import com.ly.zmn48644.mybatis.executor.statement.StatementHandler;
 import com.ly.zmn48644.mybatis.io.VFS;
 import com.ly.zmn48644.mybatis.logging.Log;
 import com.ly.zmn48644.mybatis.logging.commons.JakartaCommonsLoggingImpl;
@@ -28,6 +35,7 @@ import com.ly.zmn48644.mybatis.logging.slf4j.Slf4jImpl;
 import com.ly.zmn48644.mybatis.logging.stdout.StdOutImpl;
 import com.ly.zmn48644.mybatis.mapping.*;
 import com.ly.zmn48644.mybatis.parsing.XNode;
+import com.ly.zmn48644.mybatis.plugin.InterceptorChain;
 import com.ly.zmn48644.mybatis.reflection.DefaultReflectorFactory;
 import com.ly.zmn48644.mybatis.reflection.MetaObject;
 import com.ly.zmn48644.mybatis.reflection.ReflectorFactory;
@@ -45,6 +53,7 @@ import com.ly.zmn48644.mybatis.type.JdbcType;
 import com.ly.zmn48644.mybatis.type.TypeAliasRegistry;
 import com.ly.zmn48644.mybatis.type.TypeHandler;
 import com.ly.zmn48644.mybatis.type.TypeHandlerRegistry;
+
 
 import java.util.*;
 
@@ -93,6 +102,9 @@ public class Configuration {
         languageRegistry.setDefaultDriverClass(XMLLanguageDriver.class);
         languageRegistry.register(RawLanguageDriver.class);
     }
+    protected ProxyFactory proxyFactory = new JavassistProxyFactory();
+    //拦截器链
+    protected final InterceptorChain interceptorChain = new InterceptorChain();
 
     protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<KeyGenerator>("Key Generators collection");
 
@@ -834,5 +846,42 @@ public class Configuration {
                 incompleteMethods.iterator().next().resolve();
             }
         }
+    }
+
+    public ParameterHandler newParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql) {
+        ParameterHandler parameterHandler = mappedStatement.getLang().createParameterHandler(mappedStatement, parameterObject, boundSql);
+        parameterHandler = (ParameterHandler) interceptorChain.pluginAll(parameterHandler);
+        return parameterHandler;
+    }
+
+    public ResultSetHandler newResultSetHandler(Executor executor, MappedStatement mappedStatement, RowBounds rowBounds, ParameterHandler parameterHandler,
+                                                ResultHandler resultHandler, BoundSql boundSql) {
+        ResultSetHandler resultSetHandler = new DefaultResultSetHandler(executor, mappedStatement, parameterHandler, resultHandler, boundSql, rowBounds);
+        resultSetHandler = (ResultSetHandler) interceptorChain.pluginAll(resultSetHandler);
+        return resultSetHandler;
+    }
+
+    public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+        StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
+        statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
+        return statementHandler;
+    }
+
+    /**
+     * @since 3.4.0
+     */
+    public AutoMappingUnknownColumnBehavior getAutoMappingUnknownColumnBehavior() {
+        return autoMappingUnknownColumnBehavior;
+    }
+
+    public ProxyFactory getProxyFactory() {
+        return proxyFactory;
+    }
+
+    public void setProxyFactory(ProxyFactory proxyFactory) {
+        if (proxyFactory == null) {
+            proxyFactory = new JavassistProxyFactory();
+        }
+        this.proxyFactory = proxyFactory;
     }
 }
