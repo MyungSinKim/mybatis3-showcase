@@ -33,18 +33,17 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
 
-/**
- * @author Clinton Begin
- * @author Eduardo Macarron
- * @author Iwao AVE!
- * @author Kazuki Shimizu
- */
 public class DefaultResultSetHandler implements ResultSetHandler {
 
     private static final Object DEFERED = new Object();
 
+    //执行器对象
     private final Executor executor;
+
+    //全局配置对象
     private final Configuration configuration;
+
+
     private final MappedStatement mappedStatement;
     private final RowBounds rowBounds;
     private final ParameterHandler parameterHandler;
@@ -144,25 +143,48 @@ public class DefaultResultSetHandler implements ResultSetHandler {
         }
     }
 
-    //
-    // HANDLE RESULT SETS
-    //
+    /**
+     * 处理结果集,这个方法可用于处理多个结果集
+     *
+     * @param stmt
+     * @return
+     * @throws SQLException
+     */
     @Override
     public List<Object> handleResultSets(Statement stmt) throws SQLException {
         ErrorContext.instance().activity("handling results").object(mappedStatement.getId());
 
+        //保存映射结果集得到的结果对象
         final List<Object> multipleResults = new ArrayList<Object>();
 
         int resultSetCount = 0;
+
+        //由于可能存在多个结果集因此这里获取第一个
         ResultSetWrapper rsw = getFirstResultSet(stmt);
 
+        //获取映射文件中的映射对象集合
         List<ResultMap> resultMaps = mappedStatement.getResultMaps();
+
+        //获取映射结果集的数量
         int resultMapCount = resultMaps.size();
+
+        //这里对结果集进行验证
+        //如果结果集不为空,则 resultMapCount就不能为空.
         validateResultMapsCount(rsw, resultMapCount);
+
         while (rsw != null && resultMapCount > resultSetCount) {
+
+            //获取此查询结果对应的 resultMap 对象.
             ResultMap resultMap = resultMaps.get(resultSetCount);
+
+            //根据resultMap中定义的映射规则,对 rsw 也就是结果集进行处理,将映射结果添加到  multipleResults 中保存
+            //处理单个结果集.
             handleResultSet(rsw, resultMap, multipleResults, null);
+
+            //获取下一个结果集
             rsw = getNextResultSet(stmt);
+
+            //清空 nestedResultObjects 集合
             cleanUpAfterHandlingResultSet();
             resultSetCount++;
         }
@@ -203,31 +225,46 @@ public class DefaultResultSetHandler implements ResultSetHandler {
         return new DefaultCursor<E>(this, resultMap, rsw, rowBounds);
     }
 
+    /**
+     * 获取第一个结果集,返回结果集包装对象.
+     *
+     * @param stmt
+     * @return
+     * @throws SQLException
+     */
     private ResultSetWrapper getFirstResultSet(Statement stmt) throws SQLException {
+        //获取 stmt 中的结果集
         ResultSet rs = stmt.getResultSet();
         while (rs == null) {
             // move forward to get the first resultset in case the driver
             // doesn't return the resultset as the first result (HSQLDB 2.1)
+            //判断是否还有待处理的及结果集
             if (stmt.getMoreResults()) {
+                //如果有 将 rs 指向此结果集
                 rs = stmt.getResultSet();
             } else {
+                //如果没有待处理的结果集
                 if (stmt.getUpdateCount() == -1) {
                     // no more results. Must be no resultset
                     break;
                 }
             }
         }
+        //将获取到的第一个结果集包装成 ResultSetWrapper 对象.
         return rs != null ? new ResultSetWrapper(rs, configuration) : null;
     }
 
     private ResultSetWrapper getNextResultSet(Statement stmt) throws SQLException {
         // Making this method tolerant of bad JDBC drivers
         try {
+            //判断JDBC是否支持多结果集返回
             if (stmt.getConnection().getMetaData().supportsMultipleResultSets()) {
                 // Crazy Standard JDBC way of determining if there are more results
+                //检测是否还有待处理的结果集
                 if (!((!stmt.getMoreResults()) && (stmt.getUpdateCount() == -1))) {
                     ResultSet rs = stmt.getResultSet();
                     if (rs == null) {
+                        //这里存在递归调用
                         return getNextResultSet(stmt);
                     } else {
                         return new ResultSetWrapper(rs, configuration);
@@ -254,6 +291,12 @@ public class DefaultResultSetHandler implements ResultSetHandler {
         nestedResultObjects.clear();
     }
 
+    /**
+     * 验证结果配置
+     *
+     * @param rsw
+     * @param resultMapCount
+     */
     private void validateResultMapsCount(ResultSetWrapper rsw, int resultMapCount) {
         if (rsw != null && resultMapCount < 1) {
             throw new ExecutorException("A query was run and no Result Maps were found for the Mapped Statement '" + mappedStatement.getId()
