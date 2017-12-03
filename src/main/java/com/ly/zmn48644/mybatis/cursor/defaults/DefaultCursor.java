@@ -18,7 +18,7 @@ import java.util.NoSuchElementException;
 
 public class DefaultCursor<T> implements Cursor<T> {
 
-    // ResultSetHandler stuff
+
     private final DefaultResultSetHandler resultSetHandler;
     private final ResultMap resultMap;
     private final ResultSetWrapper rsw;
