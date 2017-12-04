@@ -3,18 +3,11 @@ package com.ly.zmn48644.mybatis.builder;
 
 import com.ly.zmn48644.mybatis.mapping.ParameterMode;
 import com.ly.zmn48644.mybatis.mapping.ResultSetType;
-import com.ly.zmn48644.mybatis.reflection.DefaultReflectorFactory;
-import com.ly.zmn48644.mybatis.reflection.ReflectorFactory;
-import com.ly.zmn48644.mybatis.reflection.factory.DefaultObjectFactory;
-import com.ly.zmn48644.mybatis.reflection.factory.ObjectFactory;
-import com.ly.zmn48644.mybatis.reflection.warpper.DefaultObjectWrapperFactory;
-import com.ly.zmn48644.mybatis.reflection.warpper.ObjectWrapperFactory;
 import com.ly.zmn48644.mybatis.session.Configuration;
 import com.ly.zmn48644.mybatis.type.JdbcType;
 import com.ly.zmn48644.mybatis.type.TypeAliasRegistry;
 import com.ly.zmn48644.mybatis.type.TypeHandler;
 import com.ly.zmn48644.mybatis.type.TypeHandlerRegistry;
-
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -24,7 +17,10 @@ import java.util.regex.Pattern;
 
 public abstract class BaseBuilder {
     protected final Configuration configuration;
+
+    //这里引用的是 configuration 对象中的 别名注册中心
     protected final TypeAliasRegistry typeAliasRegistry;
+    //这里引用的是 configuration 对象中的 类型处理器注册中心
     protected final TypeHandlerRegistry typeHandlerRegistry;
 
 

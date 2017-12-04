@@ -45,14 +45,25 @@ public abstract class BaseExecutor implements Executor {
 
     protected BaseExecutor(Configuration configuration, Transaction transaction) {
         this.transaction = transaction;
-        this.deferredLoads = new ConcurrentLinkedQueue<DeferredLoad>();
-        this.localCache = new PerpetualCache("LocalCache");
-        this.localOutputParameterCache = new PerpetualCache("LocalOutputParameterCache");
-        this.closed = false;
         this.configuration = configuration;
+
+        //延迟加载队列
+        this.deferredLoads = new ConcurrentLinkedQueue<DeferredLoad>();
+        //本地缓存实现
+        this.localCache = new PerpetualCache("LocalCache");
+        //输出参数缓存
+        this.localOutputParameterCache = new PerpetualCache("LocalOutputParameterCache");
+        //关闭标记
+        this.closed = false;
+
         this.wrapper = this;
     }
 
+    /**
+     * 获取事务管理器
+     *
+     * @return
+     */
     @Override
     public Transaction getTransaction() {
         if (closed) {
@@ -61,13 +72,22 @@ public abstract class BaseExecutor implements Executor {
         return transaction;
     }
 
+    /**
+     * 关闭执行器
+     * 底层调用的
+     *
+     * @param forceRollback
+     */
     @Override
     public void close(boolean forceRollback) {
         try {
             try {
+                //回滚事务
                 rollback(forceRollback);
             } finally {
+                //如果事务管理器不为空
                 if (transaction != null) {
+                    //调用事务管理器的关闭方法,关闭底层数据库连接
                     transaction.close();
                 }
             }
@@ -75,10 +95,12 @@ public abstract class BaseExecutor implements Executor {
             // Ignore.  There's nothing that can be done at this point.
             log.warn("Unexpected exception on closing transaction.  Cause: " + e);
         } finally {
+            //执行器关闭后,置空下列资源
             transaction = null;
             deferredLoads = null;
             localCache = null;
             localOutputParameterCache = null;
+            //将执行器的标记状态修改为true已关闭
             closed = true;
         }
     }

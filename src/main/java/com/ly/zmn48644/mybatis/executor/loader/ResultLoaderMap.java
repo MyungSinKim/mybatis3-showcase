@@ -24,10 +24,6 @@ import java.security.PrivilegedExceptionAction;
 import java.sql.SQLException;
 import java.util.*;
 
-/**
- * @author Clinton Begin
- * @author Franta Mejta
- */
 public class ResultLoaderMap {
 
     private final Map<String, LoadPair> loaderMap = new HashMap<String, LoadPair>();

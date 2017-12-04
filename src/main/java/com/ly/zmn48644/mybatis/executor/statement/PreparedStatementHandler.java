@@ -51,12 +51,22 @@ public class PreparedStatementHandler extends BaseStatementHandler {
         return resultSetHandler.<E>handleCursorResultSets(ps);
     }
 
+    /**
+     * 实例化 statement 对象
+     * 这里返回的是预编译的 statement 对象.
+     *
+     * @param connection
+     * @return
+     * @throws SQLException
+     */
     @Override
     protected Statement instantiateStatement(Connection connection) throws SQLException {
         String sql = boundSql.getSql();
         if (mappedStatement.getKeyGenerator() instanceof Jdbc3KeyGenerator) {
+
             String[] keyColumnNames = mappedStatement.getKeyColumns();
             if (keyColumnNames == null) {
+
                 return connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
             } else {
                 return connection.prepareStatement(sql, keyColumnNames);
@@ -64,6 +74,7 @@ public class PreparedStatementHandler extends BaseStatementHandler {
         } else if (mappedStatement.getResultSetType() != null) {
             return connection.prepareStatement(sql, mappedStatement.getResultSetType().getValue(), ResultSet.CONCUR_READ_ONLY);
         } else {
+            //从 connection 中获取 statement 对象.
             return connection.prepareStatement(sql);
         }
     }

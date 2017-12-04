@@ -33,6 +33,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
 
+/**
+ * 默认结果集处理器
+ */
 public class DefaultResultSetHandler implements ResultSetHandler {
 
     private static final Object DEFERED = new Object();

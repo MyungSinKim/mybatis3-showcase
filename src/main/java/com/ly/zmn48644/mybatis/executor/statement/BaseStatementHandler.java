@@ -20,18 +20,30 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+/**
+ * 这里此类中 prepare 方法的地方使用了模板方法模式
+ */
 public abstract class BaseStatementHandler implements StatementHandler {
-
+    //全局配置对象
     protected final Configuration configuration;
+    //对象工厂
     protected final ObjectFactory objectFactory;
+    //类型转换处理器注册中心
     protected final TypeHandlerRegistry typeHandlerRegistry;
+    //结果集处理器
     protected final ResultSetHandler resultSetHandler;
+    //参数处理器
     protected final ParameterHandler parameterHandler;
 
+    //执行器
     protected final Executor executor;
+
     protected final MappedStatement mappedStatement;
+
+    //结果行数限定对象
     protected final RowBounds rowBounds;
 
+    //封装具体执行的SQL语句
     protected BoundSql boundSql;
 
     protected BaseStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
@@ -64,6 +76,16 @@ public abstract class BaseStatementHandler implements StatementHandler {
         return parameterHandler;
     }
 
+
+    /**
+     * 下面是一个模板方法,在创建statement的过程中
+     * instantiateStatement 方法的部分委托给了其实现类
+     *
+     * @param connection
+     * @param transactionTimeout
+     * @return
+     * @throws SQLException
+     */
     @Override
     public Statement prepare(Connection connection, Integer transactionTimeout) throws SQLException {
         ErrorContext.instance().sql(boundSql.getSql());

@@ -18,9 +18,19 @@ import java.sql.Statement;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * 使用 SimpleStatement 完成查询更新操作的执行器
+ */
 public class SimpleExecutor extends BaseExecutor {
 
+    /**
+     * 构造方法
+     *
+     * @param configuration 全局配置对象
+     * @param transaction   事务管理器
+     */
     public SimpleExecutor(Configuration configuration, Transaction transaction) {
+        //调用父类的构造
         super(configuration, transaction);
     }
 
