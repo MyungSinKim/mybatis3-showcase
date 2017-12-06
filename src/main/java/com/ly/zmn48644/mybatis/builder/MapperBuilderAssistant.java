@@ -19,9 +19,12 @@ import java.util.*;
 
 /**
  * 辅助 XMLMapperBuilder 构建组件
+ *
+ * 一个 映射配置文件 对应一个 MapperBuilderAssistant
+ *
  */
 public class MapperBuilderAssistant extends BaseBuilder {
-    //也就是
+    //映射配置文件中的命名空间
     private String currentNamespace;
     private final String resource;
     private Cache currentCache;

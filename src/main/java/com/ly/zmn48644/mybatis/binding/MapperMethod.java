@@ -23,11 +23,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
+/**
+ * Mapper接口中的一个方法 对应 一个 MapperMethod 对象
+ */
 public class MapperMethod {
 
-    //SqlCommand 封装了,此方法对应的SQL操作的类型
+    //SqlCommand 封装了,此方法对应的SQL操作的类型.
     private final SqlCommand command;
+
+    //方法签名类, 用于封装 Mapper 接口中方法的元数据
     private final MethodSignature method;
 
     public MapperMethod(Class<?> mapperInterface, Method method, Configuration config) {
@@ -35,8 +39,16 @@ public class MapperMethod {
         this.method = new MethodSignature(config, mapperInterface, method);
     }
 
+    /**
+     * 接口代理类中会调用此方法
+     *
+     * @param sqlSession
+     * @param args
+     * @return
+     */
     public Object execute(SqlSession sqlSession, Object[] args) {
         Object result;
+        //根据 type 进入不同的查询语句分支
         switch (command.getType()) {
             case INSERT: {
                 Object param = method.convertArgsToSqlCommandParam(args);
@@ -54,6 +66,7 @@ public class MapperMethod {
                 break;
             }
             case SELECT:
+                //判断 方法是否是 void 返回 并且
                 if (method.returnsVoid() && method.hasResultHandler()) {
                     executeWithResultHandler(sqlSession, args);
                     result = null;
@@ -230,6 +243,9 @@ public class MapperMethod {
         /**
          * 给定接口class,方法名,以及声明类型,从 全局配置对象中查找 对应的 MappedStatement
          * 这里存在递归调用.
+         * <p>
+         * 通过 返回的 MappedStatement 对象可以获取到 type
+         *
          * @param mapperInterface
          * @param methodName
          * @param declaringClass
@@ -238,6 +254,8 @@ public class MapperMethod {
          */
         private MappedStatement resolveMappedStatement(Class<?> mapperInterface, String methodName,
                                                        Class<?> declaringClass, Configuration configuration) {
+
+            //根据  接口名 + . + 方法名 作为ID,从configuration中获取
             String statementId = mapperInterface.getName() + "." + methodName;
             if (configuration.hasStatement(statementId)) {
                 return configuration.getMappedStatement(statementId);
@@ -270,6 +288,8 @@ public class MapperMethod {
         private final ParamNameResolver paramNameResolver;
 
         public MethodSignature(Configuration configuration, Class<?> mapperInterface, Method method) {
+
+            //根据接口
             Type resolvedReturnType = TypeParameterResolver.resolveReturnType(method, mapperInterface);
             if (resolvedReturnType instanceof Class<?>) {
                 this.returnType = (Class<?>) resolvedReturnType;
@@ -278,6 +298,7 @@ public class MapperMethod {
             } else {
                 this.returnType = method.getReturnType();
             }
+
             this.returnsVoid = void.class.equals(this.returnType);
             this.returnsMany = (configuration.getObjectFactory().isCollection(this.returnType) || this.returnType.isArray());
             this.returnsCursor = Cursor.class.equals(this.returnType);
