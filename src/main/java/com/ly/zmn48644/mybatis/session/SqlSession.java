@@ -2,6 +2,7 @@
 package com.ly.zmn48644.mybatis.session;
 
 
+import com.ly.zmn48644.mybatis.cursor.Cursor;
 import com.ly.zmn48644.mybatis.executor.BatchResult;
 
 import java.io.Closeable;
@@ -37,33 +38,14 @@ public interface SqlSession extends Closeable {
     <K, V> Map<K, V> selectMap(String statement, Object parameter, String mapKey);
 
     <K, V> Map<K, V> selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds);
-//TODO 临时注释 游标部分内容
-//  /**
-//   * A Cursor offers the same results as a List, except it fetches data lazily using an Iterator.
-//   * @param <T> the returned cursor element type.
-//   * @param statement Unique identifier matching the statement to use.
-//   * @return Cursor of mapped objects
-//   */
-//  <T> Cursor<T> selectCursor(String statement);
-//
-//  /**
-//   * A Cursor offers the same results as a List, except it fetches data lazily using an Iterator.
-//   * @param <T> the returned cursor element type.
-//   * @param statement Unique identifier matching the statement to use.
-//   * @param parameter A parameter object to pass to the statement.
-//   * @return Cursor of mapped objects
-//   */
-//  <T> Cursor<T> selectCursor(String statement, Object parameter);
-//
-//  /**
-//   * A Cursor offers the same results as a List, except it fetches data lazily using an Iterator.
-//   * @param <T> the returned cursor element type.
-//   * @param statement Unique identifier matching the statement to use.
-//   * @param parameter A parameter object to pass to the statement.
-//   * @param rowBounds  Bounds to limit object retrieval
-//   * @return Cursor of mapped objects
-//   */
-//  <T> Cursor<T> selectCursor(String statement, Object parameter, RowBounds rowBounds);
+
+
+    <T> Cursor<T> selectCursor(String statement);
+
+
+    <T> Cursor<T> selectCursor(String statement, Object parameter);
+
+    <T> Cursor<T> selectCursor(String statement, Object parameter, RowBounds rowBounds);
 
 
     void select(String statement, Object parameter, ResultHandler handler);

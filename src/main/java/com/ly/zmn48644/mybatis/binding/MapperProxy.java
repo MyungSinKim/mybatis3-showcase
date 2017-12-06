@@ -27,7 +27,7 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     //代理接口类型
     private final Class<T> mapperInterface;
 
-    //方法缓存
+    //这里缓存了
     private final Map<Method, MapperMethod> methodCache;
 
     public MapperProxy(SqlSession sqlSession, Class<T> mapperInterface, Map<Method, MapperMethod> methodCache) {

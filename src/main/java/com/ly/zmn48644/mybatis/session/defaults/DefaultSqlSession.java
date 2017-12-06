@@ -87,6 +87,21 @@ public class DefaultSqlSession implements SqlSession {
         return mapResultHandler.getMappedResults();
     }
 
+    @Override
+    public <T> Cursor<T> selectCursor(String statement) {
+        return null;
+    }
+
+    @Override
+    public <T> Cursor<T> selectCursor(String statement, Object parameter) {
+        return null;
+    }
+
+    @Override
+    public <T> Cursor<T> selectCursor(String statement, Object parameter, RowBounds rowBounds) {
+        return null;
+    }
+
 
     @Override
     public <E> List<E> selectList(String statement) {

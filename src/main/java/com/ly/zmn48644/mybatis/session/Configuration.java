@@ -102,6 +102,7 @@ public class Configuration {
         languageRegistry.setDefaultDriverClass(XMLLanguageDriver.class);
         languageRegistry.register(RawLanguageDriver.class);
     }
+
     protected ProxyFactory proxyFactory = new JavassistProxyFactory();
     //拦截器链
     protected final InterceptorChain interceptorChain = new InterceptorChain();
