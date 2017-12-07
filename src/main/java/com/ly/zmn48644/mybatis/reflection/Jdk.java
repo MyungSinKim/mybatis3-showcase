@@ -17,6 +17,7 @@ public class Jdk {
     static {
         boolean available = false;
         try {
+            //java 8 反射模块提供了 方法参数(Parameter) 这个类,可以使用此类获取方法参数名
             Resources.classForName("java.lang.reflect.Parameter");
             available = true;
         } catch (ClassNotFoundException e) {

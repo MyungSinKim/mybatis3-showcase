@@ -22,6 +22,7 @@ public class ParamNameUtil {
         return getParameterNames(constructor);
     }
 
+    //通过反射的方式获取方法参数的真实名字
     private static List<String> getParameterNames(Executable executable) {
         final List<String> names = new ArrayList<String>();
         final Parameter[] params = executable.getParameters();
@@ -31,6 +32,9 @@ public class ParamNameUtil {
         return names;
     }
 
+    //这里把构造方法私有了,但是并不是单例模式
+    //其他方法全部是静态方法.
+    //仅仅是避免创建此类的对象
     private ParamNameUtil() {
         super();
     }

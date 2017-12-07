@@ -66,18 +66,26 @@ public class MapperMethod {
                 break;
             }
             case SELECT:
-                //判断 方法是否是 void 返回 并且
+
                 if (method.returnsVoid() && method.hasResultHandler()) {
+                    //判断 方法是否是 void 返回 并且 方法中指定了 resulthandler
                     executeWithResultHandler(sqlSession, args);
+                    //不返回数据
                     result = null;
                 } else if (method.returnsMany()) {
+                    //如果返回结果是多行记录,比如数组,集合.
                     result = executeForMany(sqlSession, args);
                 } else if (method.returnsMap()) {
+                    //如果返回结果是一个map对象
                     result = executeForMap(sqlSession, args);
                 } else if (method.returnsCursor()) {
+                    //返回结果是一个 游标查询对象
                     result = executeForCursor(sqlSession, args);
                 } else {
+                    //返回的是一个元素
+                    //解析方法参数
                     Object param = method.convertArgsToSqlCommandParam(args);
+                    //调用 sqlSession 中的方法执行SQL.
                     result = sqlSession.selectOne(command.getName(), param);
                 }
                 break;
@@ -191,12 +199,18 @@ public class MapperMethod {
         return result;
     }
 
+    /**
+     * 定义了一个静态内部类用于存储 接口参数名 和接口参数值得 对应关系.
+     *
+     * @param <V>
+     */
     public static class ParamMap<V> extends HashMap<String, V> {
-
         private static final long serialVersionUID = -2212268410512043556L;
 
         @Override
         public V get(Object key) {
+            //如果使用了 没有定义的 参数 这里会报异常
+            //这种设计思路很不错.
             if (!super.containsKey(key)) {
                 throw new BindingException("Parameter '" + key + "' not found. Available parameters are " + keySet());
             }
@@ -289,7 +303,8 @@ public class MapperMethod {
 
         public MethodSignature(Configuration configuration, Class<?> mapperInterface, Method method) {
 
-            //根据接口
+            //根据接口和方法 获取方法返回值
+            //
             Type resolvedReturnType = TypeParameterResolver.resolveReturnType(method, mapperInterface);
             if (resolvedReturnType instanceof Class<?>) {
                 this.returnType = (Class<?>) resolvedReturnType;
@@ -309,7 +324,24 @@ public class MapperMethod {
             this.paramNameResolver = new ParamNameResolver(configuration, method);
         }
 
+
+        /**
+         * 完成 方法参数 到 Sql命令参数 的转换
+         * <p>
+         * 存在下列两种情况
+         * <p>
+         * 只有一个参数或者有多个参数.
+         * <p>
+         * 如果只有一个则参数 直接返回 此参数值
+         * 如果有多个参数 返回 一个Map 例如 {name=zmn, param1=zmn, age=27, param2=27}
+         * <p>
+         * 如果想获取真实的 方法参数名 需要JDK1.8 并且要添加 编译参数 -parameters
+         *
+         * @param args
+         * @return
+         */
         public Object convertArgsToSqlCommandParam(Object[] args) {
+            //调用反射工具方法转换参数
             return paramNameResolver.getNamedParams(args);
         }
 
