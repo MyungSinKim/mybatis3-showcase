@@ -291,12 +291,18 @@ public class MapperMethod {
 
     public static class MethodSignature {
 
+        //接口方法 返回值是否是多元素的,比如是数组或者是集合
         private final boolean returnsMany;
+        //接口方法 返回值是否是一个Map
         private final boolean returnsMap;
+        //返回值 是否是 void
         private final boolean returnsVoid;
+        //接口方法的返回值 是否是 游标类型
         private final boolean returnsCursor;
+        //方法返回值类型
         private final Class<?> returnType;
         private final String mapKey;
+
         private final Integer resultHandlerIndex;
         private final Integer rowBoundsIndex;
         private final ParamNameResolver paramNameResolver;
@@ -384,6 +390,7 @@ public class MapperMethod {
         public boolean returnsCursor() {
             return returnsCursor;
         }
+
 
         private Integer getUniqueParamIndex(Method method, Class<?> paramType) {
             Integer index = null;

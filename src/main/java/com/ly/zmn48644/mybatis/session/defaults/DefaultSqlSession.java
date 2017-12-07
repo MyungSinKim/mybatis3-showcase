@@ -51,13 +51,24 @@ public class DefaultSqlSession implements SqlSession {
         return this.<T>selectOne(statement, null);
     }
 
+    /**
+     * 执行查询只有一个返回结果
+     *
+     * @param statement
+     * @param parameter
+     * @param <T>
+     * @return
+     */
     @Override
     public <T> T selectOne(String statement, Object parameter) {
         // Popular vote was to return null on 0 results and throw exception on too many.
+        //这里调用 selectList 方法
         List<T> list = this.<T>selectList(statement, parameter);
         if (list.size() == 1) {
+            //如果 查询结果长度为1,返回第一个.
             return list.get(0);
         } else if (list.size() > 1) {
+            //如果返回多个 抛出异常.
             throw new TooManyResultsException("Expected one result (or null) to be returned by selectOne(), but found: " + list.size());
         } else {
             return null;
