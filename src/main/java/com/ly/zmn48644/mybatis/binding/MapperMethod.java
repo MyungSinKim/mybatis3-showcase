@@ -25,6 +25,7 @@ import java.util.Map;
 
 /**
  * Mapper接口中的一个方法 对应 一个 MapperMethod 对象
+ * 被缓存在 MapperProxy 对象中
  */
 public class MapperMethod {
 
@@ -40,7 +41,7 @@ public class MapperMethod {
     }
 
     /**
-     * 接口代理类中会调用此方法
+     * 接口代理类中会调用此方法, 返回的是 object
      *
      * @param sqlSession
      * @param args
@@ -51,17 +52,23 @@ public class MapperMethod {
         //根据 type 进入不同的查询语句分支
         switch (command.getType()) {
             case INSERT: {
+                //转换 接口方法参数
                 Object param = method.convertArgsToSqlCommandParam(args);
+                //根据 接口方法返回值 转换返回类型
                 result = rowCountResult(sqlSession.insert(command.getName(), param));
                 break;
             }
             case UPDATE: {
+                //转换 接口方法参数
                 Object param = method.convertArgsToSqlCommandParam(args);
+                //根据 接口方法返回值 转换返回类型
                 result = rowCountResult(sqlSession.update(command.getName(), param));
                 break;
             }
             case DELETE: {
+                //转换 接口方法参数
                 Object param = method.convertArgsToSqlCommandParam(args);
+                //根据 接口方法返回值 转换返回类型
                 result = rowCountResult(sqlSession.delete(command.getName(), param));
                 break;
             }
@@ -102,17 +109,31 @@ public class MapperMethod {
         return result;
     }
 
+    /**
+     * 处理增删改 返回结果
+     * 底层返回的是一个 int 类型的影响行数,需要包装成 接口定义的类型.
+     *
+     * @param rowCount
+     * @return
+     */
     private Object rowCountResult(int rowCount) {
+
         final Object result;
         if (method.returnsVoid()) {
+            //如果 接口方法 返回值为 void
+            //返回结果设置为null
             result = null;
         } else if (Integer.class.equals(method.getReturnType()) || Integer.TYPE.equals(method.getReturnType())) {
+            //如果 接口方法 返回值为 Integer 类型
             result = rowCount;
         } else if (Long.class.equals(method.getReturnType()) || Long.TYPE.equals(method.getReturnType())) {
+            //如果 接口方法的返回值为 Long 类型
             result = (long) rowCount;
         } else if (Boolean.class.equals(method.getReturnType()) || Boolean.TYPE.equals(method.getReturnType())) {
+            //如果 接口方法的返回值为 boolean类型
             result = rowCount > 0;
         } else {
+            //如果是其他的类型则 抛出绑定异常
             throw new BindingException("Mapper method '" + command.getName() + "' has an unsupported return type: " + method.getReturnType());
         }
         return result;

@@ -19,6 +19,7 @@ public class MapperProxyFactory<T> {
     //mapper 接口类
     private final Class<T> mapperInterface;
 
+    //缓存 MapperMethod
     private final Map<Method, MapperMethod> methodCache = new ConcurrentHashMap<Method, MapperMethod>();
 
     public MapperProxyFactory(Class<T> mapperInterface) {
@@ -32,7 +33,6 @@ public class MapperProxyFactory<T> {
     public Map<Method, MapperMethod> getMethodCache() {
         return methodCache;
     }
-
 
     /**
      * 使用jdk中提供的Proxy类生成代理对象

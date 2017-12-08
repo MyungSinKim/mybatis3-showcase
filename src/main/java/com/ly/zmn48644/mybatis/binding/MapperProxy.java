@@ -27,7 +27,8 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     //代理接口类型
     private final Class<T> mapperInterface;
 
-    //这里缓存了
+    //这里缓存 MapperMethod 对象, 由于MapperMethod 在框架初始化的时候创建,在运行过程中是不会发生改变的
+    //此处的methodCache 指向  MapperProxyFactory 的成员属性 methodCache.
     private final Map<Method, MapperMethod> methodCache;
 
     public MapperProxy(SqlSession sqlSession, Class<T> mapperInterface, Map<Method, MapperMethod> methodCache) {
@@ -36,10 +37,23 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
         this.methodCache = methodCache;
     }
 
+    /**
+     * 调用 mapper接口 中的方法 真正执行的就是此方法
+     *
+     * @param proxy  代理的对象
+     * @param method 调用的方法
+     * @param args   调用方法的参数
+     * @return
+     * @throws Throwable
+     */
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
         try {
+            //method.getDeclaringClass()返回的是 method 所定义的类
+            //这里判断 如果调用的方法是定义在 Object 类中
             if (Object.class.equals(method.getDeclaringClass())) {
+                //调用 this 的 method 定义的方法.
                 return method.invoke(this, args);
             } else if (isDefaultMethod(method)) {
                 return invokeDefaultMethod(proxy, method, args);
@@ -47,20 +61,35 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
         } catch (Throwable t) {
             throw ExceptionUtil.unwrapThrowable(t);
         }
+        //尝试从缓存中获取 MapperMethod 对象
         final MapperMethod mapperMethod = cachedMapperMethod(method);
-        //
+        //调用 execute 方法
         return mapperMethod.execute(sqlSession, args);
     }
 
     private MapperMethod cachedMapperMethod(Method method) {
+        //从缓存中获取
         MapperMethod mapperMethod = methodCache.get(method);
+        //没有获取到
         if (mapperMethod == null) {
+            //创建
             mapperMethod = new MapperMethod(mapperInterface, method, sqlSession.getConfiguration());
+            //放入缓存, methodCache 是 MapperProxyFactory 的一个成员属性!
             methodCache.put(method, mapperMethod);
         }
         return mapperMethod;
     }
 
+
+    /**
+     * 调用接口中定义的 接口 默认方法
+     *
+     * @param proxy
+     * @param method
+     * @param args
+     * @return
+     * @throws Throwable
+     */
     @UsesJava7
     private Object invokeDefaultMethod(Object proxy, Method method, Object[] args)
             throws Throwable {
@@ -79,6 +108,9 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
 
     /**
      * Backport of java.lang.reflect.Method#isDefault()
+     * java.lang.reflect.Method#isDefault() 的补丁
+     * <p>
+     * jdk 1.8 提供了接口的默认方法功能, 这里就是判断是否是接口中定义的默认方法
      */
     private boolean isDefaultMethod(Method method) {
         return ((method.getModifiers()
