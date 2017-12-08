@@ -115,6 +115,13 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
         return classToCreate;
     }
 
+    /**
+     * 判断传入的 类型是否是 集合类型
+     * 此方法在多处被使用到,说以即使逻辑很简单,也别封装到此类中,以供整个项目使用.
+     * @param type Object type
+     * @param <T>
+     * @return
+     */
     @Override
     public <T> boolean isCollection(Class<T> type) {
         return Collection.class.isAssignableFrom(type);

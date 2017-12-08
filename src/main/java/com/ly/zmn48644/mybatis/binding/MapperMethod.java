@@ -31,7 +31,7 @@ public class MapperMethod {
     //SqlCommand 封装了,此方法对应的SQL操作的类型.
     private final SqlCommand command;
 
-    //方法签名类, 用于封装 Mapper 接口中方法的元数据
+    //方法签名类, 用于封装 Mapper 接口中方法的元数据, 封装和处理 方法参数 和 返回值的信息
     private final MethodSignature method;
 
     public MapperMethod(Class<?> mapperInterface, Method method, Configuration config) {
@@ -134,20 +134,36 @@ public class MapperMethod {
         }
     }
 
+    /**
+     * 执行返回多行结果的查询语句
+     *
+     * @param sqlSession
+     * @param args
+     * @param <E>
+     * @return
+     */
     private <E> Object executeForMany(SqlSession sqlSession, Object[] args) {
         List<E> result;
+        //将接口方法参数转换为一个map或者 如果只有一个参数的话 返回 参数值.
         Object param = method.convertArgsToSqlCommandParam(args);
+        //接口方法参数中是否存在 RowBounds 参数.
         if (method.hasRowBounds()) {
+            //如果存在, 从方法参数中获取 rowBounds
             RowBounds rowBounds = method.extractRowBounds(args);
+            //调用 sqlSession 的 selectList 接口查询结果
             result = sqlSession.<E>selectList(command.getName(), param, rowBounds);
         } else {
             result = sqlSession.<E>selectList(command.getName(), param);
         }
-        // issue #510 Collections & arrays support
+        //如果方法的返回值 不是List,二十数组或者其他类型的集合
+        //则需要将list 转换成 返回结果类型的对象
         if (!method.getReturnType().isAssignableFrom(result.getClass())) {
             if (method.getReturnType().isArray()) {
+                //返回类型 是一个数组
+                //将 result 转换为数组
                 return convertToArray(result);
             } else {
+                //将 result 转为 collection
                 return convertToDeclaredCollection(sqlSession.getConfiguration(), result);
             }
         }
@@ -166,32 +182,70 @@ public class MapperMethod {
         return result;
     }
 
+    /**
+     * 根据 method.getReturnType() 的类型创建 此类型的Collection对象
+     * 并且将参数中的list 添加到创建的集合中 返回.
+     *
+     * @param config
+     * @param list
+     * @param <E>
+     * @return
+     */
     private <E> Object convertToDeclaredCollection(Configuration config, List<E> list) {
+        //使用 objectFactory 创建空的返回结果
         Object collection = config.getObjectFactory().create(method.getReturnType());
+        //获取 collection 的元数据对象
         MetaObject metaObject = config.newMetaObject(collection);
+
         metaObject.addAll(list);
         return collection;
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * 将 list 转换为 数组
+     *
+     * @param list
+     * @param <E>
+     * @return
+     */
     private <E> Object convertToArray(List<E> list) {
+        //获取数组中元素的类型
         Class<?> arrayComponentType = method.getReturnType().getComponentType();
+        //创建数组, 传入的元素类型,和数组长度创建 一个空数组
         Object array = Array.newInstance(arrayComponentType, list.size());
+
+        //如果list中的元素是基本类型
         if (arrayComponentType.isPrimitive()) {
             for (int i = 0; i < list.size(); i++) {
+                //对每一个索引位置单独赋值.
                 Array.set(array, i, list.get(i));
             }
             return array;
         } else {
+            //如果list中的元素不是基本类型
+            //调用list 的toArray方法转换为数组.
             return list.toArray((E[]) array);
         }
     }
 
+    /**
+     * 执行返回结果是一个map的情况
+     *
+     * @param sqlSession
+     * @param args
+     * @param <K>
+     * @param <V>
+     * @return
+     */
     private <K, V> Map<K, V> executeForMap(SqlSession sqlSession, Object[] args) {
         Map<K, V> result;
+        //转换接口参数为一个map.
         Object param = method.convertArgsToSqlCommandParam(args);
+        //判断参数列表中是否 含有  RowBounds 参数
         if (method.hasRowBounds()) {
+            //提取 rowBounds
             RowBounds rowBounds = method.extractRowBounds(args);
+            //调用 sqlSession 方法执行
             result = sqlSession.<K, V>selectMap(command.getName(), param, method.getMapKey(), rowBounds);
         } else {
             result = sqlSession.<K, V>selectMap(command.getName(), param, method.getMapKey());
@@ -310,23 +364,34 @@ public class MapperMethod {
         public MethodSignature(Configuration configuration, Class<?> mapperInterface, Method method) {
 
             //根据接口和方法 获取方法返回值
-            //
+            //使用反射工具类获取接口中方法的返回值类型
             Type resolvedReturnType = TypeParameterResolver.resolveReturnType(method, mapperInterface);
+            //设置 returnType 这里面有三种情况
             if (resolvedReturnType instanceof Class<?>) {
+                //第一种情况返回的 是没有带泛型信息的 比如 int String User 等等
                 this.returnType = (Class<?>) resolvedReturnType;
             } else if (resolvedReturnType instanceof ParameterizedType) {
+                //第二种情况是 返回的是 参数化类型 比如  List<String> ,Set<String> 等等
                 this.returnType = (Class<?>) ((ParameterizedType) resolvedReturnType).getRawType();
             } else {
+                //第三种情况 如果上面两种情况没有获得 返回值类型 则直接调用 方法的 getReturnType获取返回值类型
+                //TODO 这里是有些疑问的.还不清楚 返回值 是那种类型会出现这种情况
                 this.returnType = method.getReturnType();
             }
 
+            //设置返回值是否是 void
             this.returnsVoid = void.class.equals(this.returnType);
+            //设置返回值是否是数组或者集合类型
             this.returnsMany = (configuration.getObjectFactory().isCollection(this.returnType) || this.returnType.isArray());
+            //设置返回值类型是否是游标类型
             this.returnsCursor = Cursor.class.equals(this.returnType);
             this.mapKey = getMapKey(method);
             this.returnsMap = (this.mapKey != null);
+            //RowBounds 参数在方法参数列表中的位置
             this.rowBoundsIndex = getUniqueParamIndex(method, RowBounds.class);
+            //ResultHandler 参数在方法参数列表中的位置
             this.resultHandlerIndex = getUniqueParamIndex(method, ResultHandler.class);
+            //方法参数解析器
             this.paramNameResolver = new ParamNameResolver(configuration, method);
         }
 

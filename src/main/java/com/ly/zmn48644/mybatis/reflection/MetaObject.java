@@ -15,7 +15,7 @@ public class MetaObject {
 
     //指向原始对象, 这里有个疑问为什么不使用泛型.
     private final Object originalObject;
-    //对象包装对象
+    //对象包装对象,简化对原始对象的操作.
     private final ObjectWrapper objectWrapper;
     //对象工厂
     private final ObjectFactory objectFactory;
