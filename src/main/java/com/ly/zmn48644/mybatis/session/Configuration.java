@@ -889,6 +889,12 @@ public class Configuration {
     }
 
     /**
+     * 创建 statement 对象, 根据mappedStatement中的类型配置来决定
+     * 返回哪一种 statement 的具体实现.
+     *
+     * 并不是在此方法中判断是那种具体实现,由于xml中每一个 配置都可能指定一个特殊的 statement 实现,因此这里通过RoutingStatementHandler在构造方法中
+     * 判断具体的实现并且返回.
+     *
      * @param executor
      * @param mappedStatement
      * @param parameterObject
@@ -898,7 +904,9 @@ public class Configuration {
      * @return
      */
     public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+        //创建 statement 具体实现
         StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
+        //插件
         statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
         return statementHandler;
     }
