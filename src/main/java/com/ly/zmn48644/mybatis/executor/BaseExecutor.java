@@ -27,20 +27,34 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.ly.zmn48644.mybatis.executor.ExecutionPlaceholder.EXECUTION_PLACEHOLDER;
 
-
+/**
+ * 执行器的公共父类, 在 DefaultSqlSession 定义的是这个类
+ * 这里使用的是 典型的模板方法模式,此公共父类中定义面向上层模块的模板方法
+ * 真正的具体的执行方法 定义为抽象方法委托给子类实现.
+ */
 public abstract class BaseExecutor implements Executor {
 
     private static final Log log = LogFactory.getLog(BaseExecutor.class);
 
+    //事务管理器
     protected Transaction transaction;
+
+    //所有的具体类型的执行器都有可能被 CachingExecutor 装饰,此属性会指向CachingExecutor对象
     protected Executor wrapper;
 
+    //懒加载相关
     protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
+    //缓存
     protected PerpetualCache localCache;
+    //缓存
     protected PerpetualCache localOutputParameterCache;
+
+    //全局配置对象
     protected Configuration configuration;
 
     protected int queryStack;
+
+    //执行器是否关闭
     private boolean closed;
 
     protected BaseExecutor(Configuration configuration, Transaction transaction) {
@@ -110,13 +124,24 @@ public abstract class BaseExecutor implements Executor {
         return closed;
     }
 
+    /**
+     * 更新 操作模板方法
+     *
+     * @param ms        全局配置对象中维护的 MappedStatement 对象
+     * @param parameter 在 SqlSession 中被包装过得 参数对象
+     * @return
+     * @throws SQLException
+     */
     @Override
     public int update(MappedStatement ms, Object parameter) throws SQLException {
         ErrorContext.instance().resource(ms.getResource()).activity("executing an update").object(ms.getId());
+        //判断执行器是否关闭
         if (closed) {
             throw new ExecutorException("Executor was closed.");
         }
+        //清理本地缓存
         clearLocalCache();
+        //调用子类具体的更新方法完成 更新操作.
         return doUpdate(ms, parameter);
     }
 
@@ -270,8 +295,17 @@ public abstract class BaseExecutor implements Executor {
         }
     }
 
+
+    /**
+     * 委托给 子类具体实现的 执行更新方法
+     * @param ms
+     * @param parameter
+     * @return
+     * @throws SQLException
+     */
     protected abstract int doUpdate(MappedStatement ms, Object parameter)
             throws SQLException;
+
 
     protected abstract List<BatchResult> doFlushStatements(boolean isRollback)
             throws SQLException;

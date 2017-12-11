@@ -20,8 +20,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 重用statement的执行器,在 SqlSession 级别进行重用
+ *
+ * 如何验证在同一个SqlSession中执行相同的SQL语句??
+ * 查看 两次使用的statement是否是同一个.
+ *
+ */
 public class ReuseExecutor extends BaseExecutor {
 
+    /**
+     * 用于缓存 statement , key 为执行的sql语句
+     */
     private final Map<String, Statement> statementMap = new HashMap<String, Statement>();
 
     public ReuseExecutor(Configuration configuration, Transaction transaction) {
@@ -71,12 +81,23 @@ public class ReuseExecutor extends BaseExecutor {
         } else {
             Connection connection = getConnection(statementLog);
             stmt = handler.prepare(connection, transaction.getTimeout());
+            /**
+             * 向 statementMap 中添加以后可以重用的 stmt
+             * 最开始几次查询 statementMap 为空 因此都会执行到此
+             * 当多次执行后,开始重复执行之前执行过的sql时,会走另外一个重用statement的分支.
+             */
             putStatement(sql, stmt);
         }
         handler.parameterize(stmt);
         return stmt;
     }
 
+    /**
+     * 判断当前执行的Sql能否重用 statement
+     *
+     * @param sql
+     * @return
+     */
     private boolean hasStatementFor(String sql) {
         try {
             return statementMap.keySet().contains(sql) && !statementMap.get(sql).getConnection().isClosed();
@@ -85,10 +106,22 @@ public class ReuseExecutor extends BaseExecutor {
         }
     }
 
+    /**
+     * 从 statementMap 获取 statement
+     *
+     * @param s
+     * @return
+     */
     private Statement getStatement(String s) {
         return statementMap.get(s);
     }
 
+    /**
+     * 向 statementMap 中添加 statement
+     *
+     * @param sql
+     * @param stmt
+     */
     private void putStatement(String sql, Statement stmt) {
         statementMap.put(sql, stmt);
     }

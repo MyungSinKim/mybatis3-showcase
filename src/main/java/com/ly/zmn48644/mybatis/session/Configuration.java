@@ -61,7 +61,6 @@ import java.util.*;
  * 全局配置对象
  */
 public class Configuration {
-    //TODO 未完成 Configuration
 
     public Configuration(Environment environment) {
         this();
@@ -169,6 +168,8 @@ public class Configuration {
 
     protected Integer defaultStatementTimeout;
     protected Integer defaultFetchSize;
+
+    //系统默认使用的执行器类型 是 SIMPLE
     protected ExecutorType defaultExecutorType = ExecutorType.SIMPLE;
 
 
@@ -183,7 +184,7 @@ public class Configuration {
     //是否启用懒加载机制
     protected boolean lazyLoadingEnabled = false;
 
-    //全局性的缓存配置,默认是启用缓存的.
+    //二级缓存是否开启配置,默认是启用缓存的.
     protected boolean cacheEnabled = true;
 
     //自动映射行为 的配置, 默认为 部分映射.
@@ -221,25 +222,50 @@ public class Configuration {
     protected final Collection<MethodResolver> incompleteMethods = new LinkedList<MethodResolver>();
 
 
+    /**
+     * 创建执行器,执行器类型使用 defaultExecutorType 配置的类型
+     * defaultExecutorType 不配置使用的是 SIMPLE 类型的执行器.
+     *
+     * @param transaction
+     * @return
+     */
     public Executor newExecutor(Transaction transaction) {
         return newExecutor(transaction, defaultExecutorType);
     }
 
 
+    /**
+     * 根据 transaction, 和 executorType 创建执行器
+     *
+     * @param transaction
+     * @param executorType
+     * @return
+     */
     public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
+
+        //如果传入的executorType为空 使用defaultExecutorType(从配置文件中解析的,有可能为空)
         executorType = executorType == null ? defaultExecutorType : executorType;
+        //当 executorType为空  defaultExecutorType 也为空时,默认使用SIMPLE
         executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
+
         Executor executor;
+
         if (ExecutorType.BATCH == executorType) {
+            //创建 批量执行器
             executor = new BatchExecutor(this, transaction);
         } else if (ExecutorType.REUSE == executorType) {
+            //创建 可重用statement执行器
             executor = new ReuseExecutor(this, transaction);
         } else {
+            //其他情况创建 普通执行器
             executor = new SimpleExecutor(this, transaction);
         }
+        //如果配置文件中开启了,二级缓存配置.
         if (cacheEnabled) {
+            //包装缓存执行器
             executor = new CachingExecutor(executor);
         }
+        //插件调用链
         executor = (Executor) interceptorChain.pluginAll(executor);
         return executor;
     }
@@ -862,6 +888,15 @@ public class Configuration {
         return resultSetHandler;
     }
 
+    /**
+     * @param executor
+     * @param mappedStatement
+     * @param parameterObject
+     * @param rowBounds
+     * @param resultHandler
+     * @param boundSql
+     * @return
+     */
     public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
         StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
         statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);

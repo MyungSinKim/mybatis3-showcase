@@ -91,19 +91,31 @@ public abstract class BaseStatementHandler implements StatementHandler {
         ErrorContext.instance().sql(boundSql.getSql());
         Statement statement = null;
         try {
+            //调用子类方法,完成具体Statement的创建.
             statement = instantiateStatement(connection);
+            //设置事务超时时间
             setStatementTimeout(statement, transactionTimeout);
+            //设置FetchSize
             setFetchSize(statement);
             return statement;
         } catch (SQLException e) {
+            //抛出异常关闭statement
             closeStatement(statement);
             throw e;
         } catch (Exception e) {
+            //抛出异常关闭statement
             closeStatement(statement);
             throw new ExecutorException("Error preparing statement.  Cause: " + e, e);
         }
     }
 
+    /**
+     * 抽象方法委托给具体实现类完成创建操作
+     *
+     * @param connection
+     * @return
+     * @throws SQLException
+     */
     protected abstract Statement instantiateStatement(Connection connection) throws SQLException;
 
     protected void setStatementTimeout(Statement stmt, Integer transactionTimeout) throws SQLException {

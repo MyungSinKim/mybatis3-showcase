@@ -21,16 +21,24 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * 专门针对批量语句执行的执行器实现
+ */
 public class BatchExecutor extends BaseExecutor {
 
     public static final int BATCH_UPDATE_RETURN_VALUE = Integer.MIN_VALUE + 1002;
 
+    //批量执行用到的 Statement 集合
     private final List<Statement> statementList = new ArrayList<Statement>();
+    //批量执行结果集的集合
     private final List<BatchResult> batchResultList = new ArrayList<BatchResult>();
+    //批量执行过程中当前执行的SQL.
     private String currentSql;
+    //
     private MappedStatement currentStatement;
 
     public BatchExecutor(Configuration configuration, Transaction transaction) {
+
         super(configuration, transaction);
     }
 
@@ -57,7 +65,7 @@ public class BatchExecutor extends BaseExecutor {
             statementList.add(stmt);
             batchResultList.add(new BatchResult(ms, sql, parameterObject));
         }
-        // handler.parameterize(stmt);
+        handler.parameterize(stmt);
         handler.batch(stmt);
         return BATCH_UPDATE_RETURN_VALUE;
     }

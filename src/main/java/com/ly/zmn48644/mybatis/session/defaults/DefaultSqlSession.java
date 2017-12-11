@@ -28,11 +28,16 @@ import java.util.*;
  */
 public class DefaultSqlSession implements SqlSession {
 
+    //全局配置对象
     private final Configuration configuration;
-    private final Executor executor;
 
+    //Statement 执行器
+    private final Executor executor;
+    //是否自动提价事务
     private final boolean autoCommit;
+
     private boolean dirty;
+
     private List<Cursor<?>> cursorList;
 
     public DefaultSqlSession(Configuration configuration, Executor executor, boolean autoCommit) {
@@ -52,7 +57,7 @@ public class DefaultSqlSession implements SqlSession {
     }
 
     /**
-     * 执行查询只有一个返回结果
+     * 执行查询只有一个返回结果,底层调用的是 selectList 方法
      *
      * @param statement
      * @param parameter
@@ -64,6 +69,7 @@ public class DefaultSqlSession implements SqlSession {
         // Popular vote was to return null on 0 results and throw exception on too many.
         //这里调用 selectList 方法
         List<T> list = this.<T>selectList(statement, parameter);
+
         if (list.size() == 1) {
             //如果 查询结果长度为1,返回第一个.
             return list.get(0);
@@ -71,6 +77,7 @@ public class DefaultSqlSession implements SqlSession {
             //如果返回多个 抛出异常.
             throw new TooManyResultsException("Expected one result (or null) to be returned by selectOne(), but found: " + list.size());
         } else {
+            //返回其他长度值,返回null
             return null;
         }
     }
@@ -127,7 +134,9 @@ public class DefaultSqlSession implements SqlSession {
     @Override
     public <E> List<E> selectList(String statement, Object parameter, RowBounds rowBounds) {
         try {
+            //从全局配置中心获取 MappedStatement 根据 statement .
             MappedStatement ms = configuration.getMappedStatement(statement);
+            //调用底层执行器方法执行 statement .
             return executor.query(ms, wrapCollection(parameter), rowBounds, Executor.NO_RESULT_HANDLER);
         } catch (Exception e) {
             throw ExceptionFactory.wrapException("Error querying database.  Cause: " + e, e);
@@ -300,16 +309,33 @@ public class DefaultSqlSession implements SqlSession {
         return (!autoCommit && dirty) || force;
     }
 
+    /***
+     *
+     * @param object
+     * @return
+     */
     private Object wrapCollection(final Object object) {
+        /**
+         * 传入的object有可能是下面几种类型.
+         * 第一种: 仅仅是一个参数值, 比如 接口方法是  xxx(String name)
+         * 第二种: object是一个Map, 比如 接口方法是 xxx(String id,String name)
+         * 第三种: object是一个 list , 比如 接口方法是 xxx(List<String> nameList)
+         * 第四种: object是一个 Array, 比如 接口方法是 xxx(String[] nameArray)
+         */
+
         if (object instanceof Collection) {
+            //如果是 Collecion 类型
             StrictMap<Object> map = new StrictMap<Object>();
             map.put("collection", object);
             if (object instanceof List) {
+                //如果是 list 类型
                 map.put("list", object);
             }
             return map;
+            //判断 object 是否是数组类型
         } else if (object != null && object.getClass().isArray()) {
             StrictMap<Object> map = new StrictMap<Object>();
+            //是 数组类型
             map.put("array", object);
             return map;
         }
