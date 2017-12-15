@@ -298,6 +298,7 @@ public abstract class BaseExecutor implements Executor {
 
     /**
      * 委托给 子类具体实现的 执行更新方法
+     *
      * @param ms
      * @param parameter
      * @return

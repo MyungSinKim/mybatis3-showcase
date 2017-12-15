@@ -46,7 +46,6 @@ public class DefaultResultSetHandler implements ResultSetHandler {
     //全局配置对象
     private final Configuration configuration;
 
-
     private final MappedStatement mappedStatement;
     private final RowBounds rowBounds;
     private final ParameterHandler parameterHandler;
@@ -107,9 +106,6 @@ public class DefaultResultSetHandler implements ResultSetHandler {
         this.primitiveTypes = new PrimitiveTypes();
     }
 
-    //
-    // HANDLE OUTPUT PARAMETER
-    //
 
     @Override
     public void handleOutputParameters(CallableStatement cs) throws SQLException {
@@ -379,7 +375,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
         }
     }
 
-    @SuppressWarnings("unchecked" /* because ResultHandler<?> is always ResultHandler<Object>*/)
+
     private void callResultHandler(ResultHandler<?> resultHandler, DefaultResultContext<Object> resultContext, Object rowValue) {
         resultContext.nextResultObject(rowValue);
         ((ResultHandler<Object>) resultHandler).handleResult(resultContext);
@@ -400,10 +396,6 @@ public class DefaultResultSetHandler implements ResultSetHandler {
             }
         }
     }
-
-    //
-    // GET VALUE FROM ROW FOR SIMPLE RESULT MAP
-    //
 
     private Object getRowValue(ResultSetWrapper rsw, ResultMap resultMap) throws SQLException {
         final ResultLoaderMap lazyLoader = new ResultLoaderMap();
@@ -432,10 +424,6 @@ public class DefaultResultSetHandler implements ResultSetHandler {
             }
         }
     }
-
-    //
-    // PROPERTY MAPPINGS
-    //
 
     private boolean applyPropertyMappings(ResultSetWrapper rsw, ResultMap resultMap, MetaObject metaObject, ResultLoaderMap lazyLoader, String columnPrefix)
             throws SQLException {
