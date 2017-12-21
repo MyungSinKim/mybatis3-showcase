@@ -97,6 +97,12 @@ public class SimpleStatementHandler extends BaseStatementHandler {
     @Override
     protected Statement instantiateStatement(Connection connection) throws SQLException {
         //如果设置了ResultSetType则 传入此参数.
+        /***
+         * connnection中提供了三个createStatement重载方法,主要是下面三个属性的重载
+         * resultSetType:结果集类型
+         * resultSetConcurrency: 结果集并发性
+         * resultSetHoldability: 结果集可保存性
+         */
         if (mappedStatement.getResultSetType() != null) {
             return connection.createStatement(mappedStatement.getResultSetType().getValue(), ResultSet.CONCUR_READ_ONLY);
         } else {

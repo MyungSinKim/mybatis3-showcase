@@ -50,8 +50,9 @@ public class XMLStatementBuilder extends BaseBuilder {
         String resultType = context.getStringAttribute("resultType");
         String lang = context.getStringAttribute("lang");
         LanguageDriver langDriver = getLanguageDriver(lang);
-
         Class<?> resultTypeClass = resolveClass(resultType);
+
+        //解析配置的resultSetType属性值
         String resultSetType = context.getStringAttribute("resultSetType");
         StatementType statementType = StatementType.valueOf(context.getStringAttribute("statementType", StatementType.PREPARED.toString()));
         ResultSetType resultSetTypeEnum = resolveResultSetType(resultSetType);

@@ -4,11 +4,15 @@ package com.ly.zmn48644.mybatis.transaction;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-
+/**
+ * 对数据库事务的封装接口
+ *
+ *
+ */
 public interface Transaction {
 
     /**
-     * Retrieve inner database connection
+     * 获取数据库连接
      *
      * @return DataBase connection
      * @throws SQLException
@@ -16,28 +20,28 @@ public interface Transaction {
     Connection getConnection() throws SQLException;
 
     /**
-     * Commit inner database connection.
+     * 提交事务
      *
      * @throws SQLException
      */
     void commit() throws SQLException;
 
     /**
-     * Rollback inner database connection.
+     * 回滚事务
      *
      * @throws SQLException
      */
     void rollback() throws SQLException;
 
     /**
-     * Close inner database connection.
+     * 关闭数据库连接
      *
      * @throws SQLException
      */
     void close() throws SQLException;
 
     /**
-     * Get transaction timeout if set
+     * 获取事务超时时间
      *
      * @throws SQLException
      */

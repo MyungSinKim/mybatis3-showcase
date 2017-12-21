@@ -38,6 +38,7 @@ public class SimpleExecutor extends BaseExecutor {
 
     /**
      * 抽象父类 doUpdate 方法具体实现
+     *
      * @param ms
      * @param parameter
      * @return
@@ -100,6 +101,7 @@ public class SimpleExecutor extends BaseExecutor {
 
     /**
      * 当前类中doFlushStatements不做处理,直接返回空集合.
+     *
      * @param isRollback
      * @return
      * @throws SQLException
@@ -110,6 +112,7 @@ public class SimpleExecutor extends BaseExecutor {
     }
 
     /**
+     * 获取 数据库连接,创建 statement并且设置参数.
      *
      * @param handler
      * @param statementLog

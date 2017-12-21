@@ -56,6 +56,7 @@ public final class MappedStatement {
             mappedStatement.configuration = configuration;
             mappedStatement.id = id;
             mappedStatement.sqlSource = sqlSource;
+            //默认情况下使用的是 PREPARED 类型,默认情况是指 配置文件中没有通过属性明确指定.
             mappedStatement.statementType = StatementType.PREPARED;
             mappedStatement.parameterMap = new ParameterMap.Builder(configuration, "defaultParameterMap", null, new ArrayList<ParameterMapping>()).build();
             mappedStatement.resultMaps = new ArrayList<ResultMap>();
@@ -280,26 +281,26 @@ public final class MappedStatement {
     }
 
 
-  public BoundSql getBoundSql(Object parameterObject) {
-    BoundSql boundSql = sqlSource.getBoundSql(parameterObject);
-    List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
-    if (parameterMappings == null || parameterMappings.isEmpty()) {
-      boundSql = new BoundSql(configuration, boundSql.getSql(), parameterMap.getParameterMappings(), parameterObject);
-    }
-
-    // check for nested result maps in parameter mappings (issue #30)
-    for (ParameterMapping pm : boundSql.getParameterMappings()) {
-      String rmId = pm.getResultMapId();
-      if (rmId != null) {
-        ResultMap rm = configuration.getResultMap(rmId);
-        if (rm != null) {
-          hasNestedResultMaps |= rm.hasNestedResultMaps();
+    public BoundSql getBoundSql(Object parameterObject) {
+        BoundSql boundSql = sqlSource.getBoundSql(parameterObject);
+        List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
+        if (parameterMappings == null || parameterMappings.isEmpty()) {
+            boundSql = new BoundSql(configuration, boundSql.getSql(), parameterMap.getParameterMappings(), parameterObject);
         }
-      }
-    }
 
-    return boundSql;
-  }
+        // check for nested result maps in parameter mappings (issue #30)
+        for (ParameterMapping pm : boundSql.getParameterMappings()) {
+            String rmId = pm.getResultMapId();
+            if (rmId != null) {
+                ResultMap rm = configuration.getResultMap(rmId);
+                if (rm != null) {
+                    hasNestedResultMaps |= rm.hasNestedResultMaps();
+                }
+            }
+        }
+
+        return boundSql;
+    }
 
     private static String[] delimitedStringToArray(String in) {
         if (in == null || in.trim().length() == 0) {
