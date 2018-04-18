@@ -413,6 +413,12 @@ public class DefaultResultSetHandler implements ResultSetHandler {
         return rowValue;
     }
 
+    /**
+     * 是否启用自动映射
+     * @param resultMap
+     * @param isNested
+     * @return
+     */
     private boolean shouldApplyAutomaticMappings(ResultMap resultMap, boolean isNested) {
         if (resultMap.getAutoMapping() != null) {
             return resultMap.getAutoMapping();
